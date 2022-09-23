@@ -1,0 +1,1 @@
+white black 0 black (R)b00f (N)b01t (B)b02t (Q)b03t (B)b05t (R)b06t (P)b10f (P)b11f (P)w13t (P)b14f (K)b15t (P)b16f (P)b17f (N)w24t (P)b25t (N)b26t (B)w31t (P)b32t (P)w44t (P)w51t (P)w60f (P)w63f (P)w65f (P)w66f (P)w67f (R)w70f (N)w71t (B)w72t (Q)w73t (K)w74f (R)w77f null
