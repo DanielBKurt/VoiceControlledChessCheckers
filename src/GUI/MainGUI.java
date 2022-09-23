@@ -75,7 +75,6 @@ public class MainGUI implements Runnable {
         createFrame();
         addGameTitle();
         addPlayerFields();
-        addPlayerTextField();
         addButtons();
     }
 
@@ -101,16 +100,33 @@ public class MainGUI implements Runnable {
     }
 
     private void addPlayerFields() {
-        final JLabel whiteIcon = new JLabel(new ImageIcon((Tag.WHITE_KING)));
-        final JLabel blackIcon = new JLabel(new ImageIcon((Tag.BLACK_KING)));
+        JLabel whiteChessIcon = new JLabel(new ImageIcon((Tag.WHITE_KING)));
+        JLabel blackChessIcon = new JLabel(new ImageIcon((Tag.BLACK_KING)));
+        JLabel blackCheckersIcon = new JLabel(new ImageIcon((Tag.BLACK_KING)));
+        JLabel redCheckersIcon = new JLabel(new ImageIcon((Tag.WHITE_KING)));
+        JButton playChess = new JButton("Play");
+        JButton playCheckers = new JButton("Play");
+        JButton loadChess = new JButton("Load");
+        JButton loadCheckers = new JButton("Load");
+        playChess.addActionListener(e -> playChessItemActionPerformed(e));
+        playCheckers.addActionListener(e -> playCheckersItemActionPerformed(e));
+        loadChess.addActionListener(e -> loadChessItemActionPerformed(e));
+        loadCheckers.addActionListener(e -> loadCheckersItemActionPerformed(e));
         // create new panel for player one
         whitePlayerPanel = new JPanel();
-        whitePlayerPanel.add(whiteIcon);
+        whitePlayerPanel.add(playChess);
+        whitePlayerPanel.add(whiteChessIcon);
         whitePlayerPanel.setBackground(Tag.ColorChoice[1][6]);
         // create new panel for player two
         blackPlayerPanel = new JPanel();
-        blackPlayerPanel.add(blackIcon);
+        blackPlayerPanel.add(loadChess);
+        blackPlayerPanel.add(blackChessIcon);
         blackPlayerPanel.setBackground(Tag.ColorChoice[1][6]);
+        addPlayerTextField();
+        whitePlayerPanel.add(blackCheckersIcon);
+        blackPlayerPanel.add(redCheckersIcon);
+        whitePlayerPanel.add(playCheckers);
+        blackPlayerPanel.add(loadCheckers);
         //create panel that holds both player panels
         playerPanel = new JPanel();
         playerPanel.setBackground(Tag.ColorChoice[1][6]);
@@ -139,27 +155,16 @@ public class MainGUI implements Runnable {
     private void addButtons() {
         buttons = new JPanel();
         buttons.setBackground(Tag.ColorChoice[1][6]);
-        buttons.setLayout(new GridLayout(1, 5, 25, 10));
+        buttons.setLayout(new GridLayout(1, 3, 45, 10));
         JPanel buttonWrapper = new JPanel();
         buttonWrapper.setBackground(Tag.ColorChoice[1][6]);
         buttonWrapper.setPreferredSize(new Dimension(600, 120));
-        final JButton play = new JButton("Play");
-        final JButton load = new JButton("Load");
         final JButton settings = new JButton("Settings");
         final JButton help = new JButton("Help");
         final JButton quit = new JButton("Quit");
-        play.setBackground(Tag.ColorChoice[1][7]);
-        load.setBackground(Tag.ColorChoice[1][7]);
-        settings.setBackground(Tag.ColorChoice[1][7]);
-        help.setBackground(Tag.ColorChoice[1][7]);
-        quit.setBackground(Tag.ColorChoice[1][7]);
-        play.addActionListener(e -> playItemActionPerformed(e));
-        load.addActionListener(e -> loadItemActionPerformed(e));
         settings.addActionListener(e -> settingsItemActionPerformed(e));
         help.addActionListener(e -> helpItemActionPerformed(e));
         quit.addActionListener(e -> quitItemActionPerformed(e));
-        buttons.add(play);
-        buttons.add(load);
         buttons.add(settings);
         buttons.add(help);
         buttons.add(quit);
@@ -172,19 +177,58 @@ public class MainGUI implements Runnable {
         mainGUI.setVisible(true);
     }
 
-    private void playItemActionPerformed(ActionEvent e) {
-        new GameGUI(this, speech, whitePlayerTextField.getText(), blackPlayerTextField.getText(), colorSet);
+    private void playChessItemActionPerformed(ActionEvent e) {
+        String playerOne, playerTwo;
+        if (whitePlayerTextField.getText().length() == 0)
+            playerOne = "white";
+        else
+            playerOne = whitePlayerTextField.getText();
+        if (blackPlayerTextField.getText().length() == 0)
+            playerTwo = "black";
+        else
+            playerTwo = blackPlayerTextField.getText();
+        new ChessGameGUI(this, speech, playerOne, playerTwo, colorSet);
         mainGUI.setVisible(false);
     }
 
-    private void loadItemActionPerformed(ActionEvent e) {
+    private void playCheckersItemActionPerformed(ActionEvent e) {
+        String playerOne, playerTwo;
+        if (whitePlayerTextField.getText().length() == 0)
+            playerOne = "black";
+        else
+            playerOne = whitePlayerTextField.getText();
+        if (blackPlayerTextField.getText().length() == 0)
+            playerTwo = "red";
+        else
+            playerTwo = blackPlayerTextField.getText();
+        new CheckersGameGUI(this, speech, playerOne,  playerTwo, colorSet);
+        mainGUI.setVisible(false);
+    }
+
+    private void loadChessItemActionPerformed(ActionEvent e) {
         try {
                 File saveFile = new File("./savedgames/Chess.txt");
                 Scanner myReader = new Scanner(saveFile);
                 String savedGame = myReader.nextLine();
                 String[] pieces = savedGame.split(" "); //list of words separated by spaces
                 myReader.close();
-                new GameGUI(this, pieces, speech, pieces[0], pieces[1], Integer.valueOf(pieces[2]));
+                new ChessGameGUI(this, pieces, speech, pieces[0], pieces[1], Integer.valueOf(pieces[2]));
+                mainGUI.setVisible(false);
+            
+          } catch (FileNotFoundException error) {
+            System.out.println("No save found");
+            error.printStackTrace();
+          }
+    }
+
+    private void loadCheckersItemActionPerformed(ActionEvent e) {
+        try {
+                File saveFile = new File("./savedgames/Checkers.txt");
+                Scanner myReader = new Scanner(saveFile);
+                String savedGame = myReader.nextLine();
+                String[] pieces = savedGame.split(" "); //list of words separated by spaces
+                myReader.close();
+                new CheckersGameGUI(this, pieces, speech, pieces[0], pieces[1], Integer.valueOf(pieces[2]));
                 mainGUI.setVisible(false);
             
           } catch (FileNotFoundException error) {
@@ -195,7 +239,9 @@ public class MainGUI implements Runnable {
 
     private void helpItemActionPerformed(ActionEvent e) {
         JOptionPane.showMessageDialog(mainGUI,
-        "Enter names for players or they will default to white and black\n" +
+        "Enter player names or let them default to their respective colors\n" +
+        "Press play to start a new game or load to load a previous save\n" +
+        "The left play and load buttons will launch chess and the right will launch checkers\n" +
         "Left click or press the speak button and say the name of the square to select\n" +
         "Because the speech recognizer can mishear you, please say one square at a time\n" +
         "For example, say 'alpha two' to select and then 'alpha four' to move that piece\n" +
@@ -219,6 +265,7 @@ public class MainGUI implements Runnable {
 
     private void settingsItemActionPerformed(ActionEvent e) {
         JFrame settings = new JFrame("Settings");
+        settings.setIconImage(new ImageIcon(Tag.SETTINGS_LOGO).getImage());
         settings.setSize(300, 450);
         settings.setLocationRelativeTo(mainGUI);
         JPanel instructions = new JPanel();

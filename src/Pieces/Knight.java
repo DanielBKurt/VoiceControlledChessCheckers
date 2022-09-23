@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import BoardComponents.Position;
 import Information.Tag.Side;
 
-public class Knight extends Piece {
+public class Knight extends ChessPiece {
     public Knight(Side side, Position start, String imageFileName) { super(side, start, imageFileName); }
 
     @Override

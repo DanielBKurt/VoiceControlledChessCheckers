@@ -6,93 +6,67 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.Font;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
-import java.io.FileWriter;
-
 import BoardComponents.Board;
+
 import Information.Tag;
 import Information.Tag.Side;
+
 import SpeechRecognizer.SpeechRecognizerMain;
 
-public class GameGUI {
-    private int colorSet;
-    private String playerOneName;
-    private String playerTwoName;
-    private JTextArea speechOutput;
-    private JTextArea currentTurn;
-    private JFrame gameGUI;
-    private Board boardGUI;
-    private MainGUI main;
-    private SpeechRecognizerMain speech;
+public abstract class GameGUI {
+    protected int colorSet;
+    protected String playerOneName;
+    protected String playerTwoName;
+    protected JTextArea speechOutput;
+    protected JTextArea currentTurn;
+    protected JFrame gameGUI;
+    protected Board boardGUI;
+    protected MainGUI main;
+    protected SpeechRecognizerMain speech;
 
     public GameGUI(MainGUI main, SpeechRecognizerMain speech, String playerOne, String playerTwo, int colorSet) { 
         this.main = main;
         this.speech = speech;
         this.colorSet = colorSet;
-        if (playerOne.length() == 0)
-            playerOneName = "white";
-        else
-            playerOneName = playerOne;
-        if (playerTwo.length() == 0)
-            playerTwoName = "black";
-        else
-            playerTwoName = playerTwo;
+        this.playerOneName = playerOne;
+        this.playerTwoName = playerTwo;
         initializeGameGUI();
         speech.updateGame(boardGUI);
     }
 
     public GameGUI(MainGUI main, String[] pieces, SpeechRecognizerMain speech, String playerOne, String playerTwo, int colorSet)
     {
-        System.out.println("Load GUI");
         this.main = main;
         this.speech = speech;
         this.colorSet = colorSet;
-        if (playerOne.length() == 0)
-            playerOneName = "white";
-        else
-            playerOneName = playerOne;
-        if (playerTwo.length() == 0)
-            playerTwoName = "black";
-        else
-            playerTwoName = playerTwo;
+        this.playerOneName = playerOne;
+        this.playerTwoName = playerTwo;
         initializeGameGUI(pieces);
         speech.updateGame(boardGUI);
     }
     
-    private void initializeGameGUI() {
-        createFrame();
-        addButtons();
-        this.boardGUI = new Board(this, colorSet);
-        createBoardGUIFrame();
-        setSize();
-        this.gameGUI.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    }
+    /***
+     * creates new game with GUI from scratch
+     */
+    protected abstract void initializeGameGUI();
 
-    private void initializeGameGUI(String[] pieces) {
-        createFrame();
-        addButtons();
-        this.boardGUI = new Board(this, pieces);
-        createBoardGUIFrame();
-        this.boardGUI.checkHighlight(); //has to be called after createBoardGUIFrame because create instantiates currentTurn JTextArea, cannot append if currentTurn is null
-        setSize();
-        this.gameGUI.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    }
+    /***
+     * creates game from previous save
+     */
+    protected abstract void initializeGameGUI(String[] pieces);
 
-    private void createFrame() {
-        gameGUI = new JFrame("Voice Controlled Chess");
-        gameGUI.setIconImage(new ImageIcon(Tag.LAZY_ICON).getImage());
-        this.gameGUI.setLayout(new BorderLayout(0, 0));
-        this.gameGUI.getContentPane().setBackground(Tag.ColorChoice[colorSet][6]);
-    }
+    /***
+     * creates JFrame for this GameGUI
+     */
+    protected abstract void createFrame();
 
-    private void createBoardGUIFrame() {
-        System.out.println("Called guiframe");
+    protected void createBoardGUIFrame() {
         int borderPanelSize = 30; //width of panels around board
         JPanel boardPanel = new JPanel(new BorderLayout(0, 0));
         //create panels to create "frame" around board
@@ -110,7 +84,7 @@ public class GameGUI {
         right.setPreferredSize(new Dimension(borderPanelSize, borderPanelSize));
         bottom.setPreferredSize(new Dimension(borderPanelSize, borderPanelSize));
         //add text output on bottom and top
-        this.currentTurn = new JTextArea("Current turn: " + (boardGUI.getTurn() == Side.WHITE ? playerOneName : playerTwoName)); //default to white turn
+        this.currentTurn = new JTextArea("");
         currentTurn.setFont(new Font("Monospaced", Font.BOLD, 20));
         currentTurn.setBackground(Tag.ColorChoice[colorSet][6]);
         currentTurn.setForeground(Tag.ColorChoice[colorSet][9]);
@@ -128,7 +102,7 @@ public class GameGUI {
         this.gameGUI.add(boardPanel, BorderLayout.CENTER);
     }
     
-    private void setSize() {
+    protected void setSize() {
         this.gameGUI.setSize(gameGUI.getPreferredSize());
         this.gameGUI.setMinimumSize(gameGUI.getPreferredSize());
         this.gameGUI.setLocationRelativeTo(null);
@@ -136,7 +110,7 @@ public class GameGUI {
         this.gameGUI.setResizable(false);
     }
 
-    private void addButtons() {
+    protected void addButtons() {
         JPanel buttons = new JPanel();
         buttons.setBackground(Tag.ColorChoice[colorSet][6]);
         buttons.setLayout(new GridLayout(1, 4, 10, 10));
@@ -164,7 +138,7 @@ public class GameGUI {
         System.out.println(buttons.getWidth() + ", " + buttons.getHeight());
     }
 
-    private void speakItemActionPerformed(ActionEvent e) {
+    protected void speakItemActionPerformed(ActionEvent e) {
         try
         {
             Thread.sleep(400); //without delay, mic registers mouse click as command
@@ -176,28 +150,9 @@ public class GameGUI {
         speech.stopIgnoreSpeechRecognitionResults();
     }
 
-    private void saveItemActionPerformed(ActionEvent e) {
-        //System.out.println(System.getProperty("user.dir"));
-        if (boardGUI.getTurn() == Side.OVER)
-        {
-            speechOutput.replaceRange("Can not save a finished game", 0, speechOutput.getText().length());
-        }
-        else
-        {
-            try {
-                FileWriter writer = new FileWriter("./savedgames/Chess.txt", false);
-                writer.write(playerOneName + " " + playerTwoName + " " + boardGUI.asString());
-                writer.close();
-                boardGUI.setSaved();
-                speechOutput.replaceRange("Saved", 0, speechOutput.getText().length());
-            }
-            catch (Exception error) {
-                error.getStackTrace();
-            }
-        }
-    }
-
-    private void mainMenuItemActionPerformed(ActionEvent e) {
+    protected abstract void saveItemActionPerformed(ActionEvent e);
+    
+    protected void mainMenuItemActionPerformed(ActionEvent e) {
         String message = "Are you sure you want to return to the main menu?";
         if (!boardGUI.getSaved() && boardGUI.getTurn() != Side.OVER)
             message += "\nThis game has not been saved.";
@@ -208,7 +163,7 @@ public class GameGUI {
         }
     }
     
-    private void quitItemActionPerformed(ActionEvent e) {
+    protected void quitItemActionPerformed(ActionEvent e) {
         String message = "Are you sure you want to quit?";
         if (!boardGUI.getSaved() && boardGUI.getTurn() != Side.OVER)
             message += "\nThis game has not been saved.";
@@ -252,16 +207,11 @@ public class GameGUI {
             speechOutput.replaceRange("", 0, speechOutput.getText().length());
     }
 
-    //call after every turn change
-    public void updateCurrentTurn(Side side)
-    {
-        String replace = "Current turn: ";
-        if (side == Side.WHITE)
-            replace += playerOneName;
-        else //black
-            replace += playerTwoName;
-        currentTurn.replaceRange(replace, 0, currentTurn.getText().length());
-    }
+    /***
+     * updates current turn displayed at the bottom of the screen
+     * @param side - current turn
+     */
+    public abstract void updateCurrentTurn(Side side);
 
     //changes bottom string below board to "Current turn: name (in check)"
     public void updateTurnCheck()

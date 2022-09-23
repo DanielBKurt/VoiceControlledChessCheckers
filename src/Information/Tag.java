@@ -4,7 +4,7 @@ import java.awt.Color;
 
 public class Tag {
     // renamed Color enum to Side to make it less confusing with 2D color array
-    public static enum Side { BLACK, WHITE, PAUSE, OVER }
+    public static enum Side { BLACK, WHITE, RED, PAUSE, OVER }
     public static enum Status { ACTIVE, CHECK, CHECKMATE, STAKEMATE, SURRENDER }
 
     // choices for board/general UI colors, each index corresponds to specific spot in UI
@@ -22,6 +22,7 @@ public class Tag {
     
     // lazy chess icon
     public static final String LAZY_ICON = "assets\\lazy_chess_icon.jpg";
+    public static final String SETTINGS_LOGO = "assets\\settings_logo.png";
     public static final String TITLE = "Voice Controlled Chess";
 
     // white piece images
@@ -39,6 +40,14 @@ public class Tag {
     public static final String BLACK_ROOK = "assets\\black_rook.png";
     public static final String BLACK_BISHOP = "assets\\black_bishop.png";
     public static final String BLACK_PAWN = "assets\\black_pawn.png";
+
+    // black checkers pieces
+    public static final String BLACK_CHECKERS_PAWN = "assets\\black_pawn.png";
+    public static final String BLACK_CHECKERS_KING = "assets\\black_king.png";
+
+    // red checkers pieces
+    public static final String RED_CHECKERS_PAWN = "assets\\white_pawn.png";
+    public static final String RED_CHECKERS_KING = "assets\\white_king.png";
 
     // const for board size
     public static final int SIZE_MAX = 8;

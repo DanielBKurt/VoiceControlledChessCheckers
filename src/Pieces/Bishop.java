@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import BoardComponents.Position;
 import Information.Tag.Side;
 
-public class Bishop extends Piece {
+public class Bishop extends ChessPiece {
     public Bishop(Side side, Position start, String imageFileName) { super(side, start, imageFileName); }
 
     @Override

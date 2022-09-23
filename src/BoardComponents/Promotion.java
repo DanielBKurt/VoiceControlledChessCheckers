@@ -9,6 +9,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JFrame;
@@ -22,11 +23,11 @@ import Pieces.Rook;
 
 //this class is similar to Board except it has a 1x4 board instead of 8x8, used to display and select the piece to upgrade a pawn to
 public class Promotion extends JPanel implements MouseListener {
-    private Board currentBoard;
+    private ChessBoard currentBoard;
     private JFrame frame;
     private static final Dimension FRA_DIMENSION = new Dimension((Tag.IMAGE_WIDTH + 10) * 10, (Tag.IMAGE_HEIGHT + 10) * 10);
     Position[][] pieces;
-    public Promotion(Side side, Board board, String playerName, int colorSet)
+    public Promotion(Side side, ChessBoard board, String playerName, int colorSet)
     {
         currentBoard = board;
         setLayout(new GridLayout(1, 4, 0, 0));
@@ -43,6 +44,7 @@ public class Promotion extends JPanel implements MouseListener {
             initializeBlack();
         this.addMouseListener(this);
         frame = new JFrame("Promotion");
+        frame.setIconImage(new ImageIcon(Tag.BLACK_QUEEN).getImage());
         JPanel panel = new JPanel();
         panel.setBackground(Tag.ColorChoice[colorSet][0]);
         JLabel instructions = new JLabel(playerName + ", please select a piece your pawn to promote to");

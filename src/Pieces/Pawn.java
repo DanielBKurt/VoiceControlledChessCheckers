@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import BoardComponents.Position;
 import Information.Tag.Side;
 
-public class Pawn extends Piece {
+public class Pawn extends ChessPiece {
     private int up;
     private boolean moved;
     

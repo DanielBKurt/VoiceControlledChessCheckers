@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import BoardComponents.Position;
 import Information.Tag.*;
 
-public class King extends Piece {
+public class King extends ChessPiece {
     private boolean moved;
 
     public King(Side side, Position start, String imageFileName) {
