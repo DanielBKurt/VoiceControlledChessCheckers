@@ -66,6 +66,8 @@ public class SpeechRecognizerMain {
 	//------------------------------------------------------------------------------------
 	
 	private Board currentGame;
+
+	private boolean toggleIgnore;
 	/**
 	 * Constructor
 	 */
@@ -113,6 +115,10 @@ public class SpeechRecognizerMain {
 		startSpeechRecognition();
 	}
 
+	/**
+	 * update the local instance of board so that this knows which board to call when it has speech recognition results
+	 * @param game - current board
+	 */
 	public void updateGame(Board game)
 	{
 		currentGame = game;
@@ -135,6 +141,7 @@ public class SpeechRecognizerMain {
 				//locks
 				speechRecognizerThreadRunning = true;
 				ignoreSpeechRecognitionResults = true;
+				toggleIgnore = false;
 				
 				//Start Recognition
 				recognizer.startRecognition(true);
@@ -167,7 +174,8 @@ public class SpeechRecognizerMain {
 								makeDecision(speechRecognitionResult, speechResult.getWords());
 
 								//Start ignoring
-								ignoreSpeechRecognitionResults = true;
+								if (!toggleIgnore)
+									ignoreSpeechRecognitionResults = true;
 								
 							}
 						} else
@@ -200,7 +208,33 @@ public class SpeechRecognizerMain {
 		
 		//Instead of stopping the speech recognition we are ignoring it's results
 		ignoreSpeechRecognitionResults = true;
-		
+	}
+
+	/**
+	 * Activated by KeyListener in GameGUI, if toggle is off it will listen to everything
+	 */
+	public synchronized void toggleIgnoreSpeechRecognitionResults() {
+		toggleIgnore = !toggleIgnore;
+		if (!toggleIgnore) //was just disabled, set to ignore speech results
+			ignoreSpeechRecognitionResults();
+		else //was just enabled, set to stop ignoring speech results
+			stopIgnoreSpeechRecognitionResults();
+	}
+
+	/**
+	 * used so that gameGUI can let user know if speech recognition is toggled
+	 * @return - returns true if toggle is off and speech recognizer will never ignore results, false otherwise
+	 */
+	public boolean getToggle() {
+		return this.toggleIgnore;
+	}
+
+	/**
+	 * after returning to main menu or quitting, toggle should be shut off again as game is paused or over
+	 */
+	public void disableToggle() {
+		toggleIgnore = false;
+		ignoreSpeechRecognitionResults = true;
 	}
 	
 	//-----------------------------------------------------------------------------------------------
@@ -258,7 +292,7 @@ public class SpeechRecognizerMain {
 		return speechRecognizerThreadRunning;
 	}
 	/**
-	 * Main Method
+	 * Main Method, commented out so that compiler only sees main method in MainGUI so it knows what to run
 	 * 
 	 * @param args
 	 */

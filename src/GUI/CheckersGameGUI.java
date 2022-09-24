@@ -2,6 +2,7 @@ package GUI;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -78,6 +79,22 @@ public class CheckersGameGUI extends GameGUI {
     public void updateCurrentTurn(Side side)
     {
         String replace = "Current turn: ";
+        if (side == Side.BLACK)
+            replace += playerOneName;
+        else //red
+            replace += playerTwoName;
+        currentTurn.replaceRange(replace, 0, currentTurn.getText().length());
+    }
+
+    /***
+     * called after player attacks if there are more attacks to make with the same piece
+     */
+    public void updateTurnStatus() {
+        currentTurn.append(" (must continue attacking)");
+    }
+
+    public void updateGameOver(Side side) {
+        String replace = "Winner: ";
         if (side == Side.BLACK)
             replace += playerOneName;
         else //red

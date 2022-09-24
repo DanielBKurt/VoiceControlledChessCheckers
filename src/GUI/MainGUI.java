@@ -99,6 +99,9 @@ public class MainGUI implements Runnable {
         mainGUI.add(gameTitlePanel, BorderLayout.NORTH);
     }
 
+    /***
+     * initializes player fields, middle of the screen, includes play and load buttons, chess and checkers logos, and playertextfields
+     */
     private void addPlayerFields() {
         JLabel whiteChessIcon = new JLabel(new ImageIcon((Tag.WHITE_KING)));
         JLabel blackChessIcon = new JLabel(new ImageIcon((Tag.BLACK_KING)));
@@ -141,6 +144,9 @@ public class MainGUI implements Runnable {
         mainGUI.add(playerPanel, BorderLayout.CENTER);
     }
 
+    /***
+     * adds player text boxes where players can enter their names
+     */
     private void addPlayerTextField() {
         blackPlayerTextField = new JTextField();
         whitePlayerTextField = new JTextField();
@@ -152,6 +158,9 @@ public class MainGUI implements Runnable {
         whitePlayerTextField.setColumns(COLUMN_SPACE);
     }
 
+    /***
+     * adds settings, help, and quit buttons at the bottom of the screen
+     */
     private void addButtons() {
         buttons = new JPanel();
         buttons.setBackground(Tag.ColorChoice[1][6]);
@@ -172,6 +181,9 @@ public class MainGUI implements Runnable {
         mainGUI.add(buttonWrapper, BorderLayout.SOUTH);
     }
 
+    /***
+     * called by GameGUI if user returns to main menu, used to redisplay MainGUI
+     */
     public void mainMenu()
     {
         mainGUI.setVisible(true);
@@ -263,6 +275,10 @@ public class MainGUI implements Runnable {
         mainGUI.dispatchEvent(new WindowEvent(mainGUI, WindowEvent.WINDOW_CLOSING));
     }
 
+    /***
+     * this method creates a new JFrame that allows the user to pick which color set they want for the board, writes preferred color to Settings.txt or automatically closes if the user clicks out of it
+     * @param e - default actionevent
+     */
     private void settingsItemActionPerformed(ActionEvent e) {
         JFrame settings = new JFrame("Settings");
         settings.setIconImage(new ImageIcon(Tag.SETTINGS_LOGO).getImage());
@@ -304,6 +320,7 @@ public class MainGUI implements Runnable {
         colorSetOne.setBounds(100, 50, 50, 20);
         colorSetTwo.setBounds(100, 125, 50, 20);
         colorSetThree.setBounds(100, 200, 50, 20);
+        //loop through and display create displayBoard for each color set
         for (int i = 0; i < Tag.ColorChoice.length; i++)
         {
             JPanel displayBoard = new JPanel();

@@ -1,16 +1,29 @@
 package GUI;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.ActionEvent;
 import java.awt.Font;
+import java.awt.Color;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.AbstractAction;
 
 import BoardComponents.Board;
 
@@ -20,12 +33,14 @@ import Information.Tag.Side;
 import SpeechRecognizer.SpeechRecognizerMain;
 
 public abstract class GameGUI {
+    protected static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW; //used for key bindings
     protected int colorSet;
     protected String playerOneName;
     protected String playerTwoName;
     protected JTextArea speechOutput;
     protected JTextArea currentTurn;
     protected JFrame gameGUI;
+    protected toggleDisplay speechToggle;
     protected Board boardGUI;
     protected MainGUI main;
     protected SpeechRecognizerMain speech;
@@ -38,6 +53,7 @@ public abstract class GameGUI {
         this.playerTwoName = playerTwo;
         initializeGameGUI();
         speech.updateGame(boardGUI);
+        addKeyBindings();
     }
 
     public GameGUI(MainGUI main, String[] pieces, SpeechRecognizerMain speech, String playerOne, String playerTwo, int colorSet)
@@ -49,6 +65,7 @@ public abstract class GameGUI {
         this.playerTwoName = playerTwo;
         initializeGameGUI(pieces);
         speech.updateGame(boardGUI);
+        addKeyBindings();
     }
     
     /***
@@ -82,18 +99,51 @@ public abstract class GameGUI {
         top.setPreferredSize(new Dimension(borderPanelSize, borderPanelSize));
         left.setPreferredSize(new Dimension(borderPanelSize, borderPanelSize));
         right.setPreferredSize(new Dimension(borderPanelSize, borderPanelSize));
-        bottom.setPreferredSize(new Dimension(borderPanelSize, borderPanelSize));
+        bottom.setPreferredSize(new Dimension(borderPanelSize, borderPanelSize + 4));
+
         //add text output on bottom and top
         this.currentTurn = new JTextArea("");
         currentTurn.setFont(new Font("Monospaced", Font.BOLD, 20));
         currentTurn.setBackground(Tag.ColorChoice[colorSet][6]);
         currentTurn.setForeground(Tag.ColorChoice[colorSet][9]);
-        bottom.add(currentTurn, BorderLayout.NORTH);
+        JPanel bottomCenter = new JPanel();
+        bottomCenter.setBackground(Tag.ColorChoice[colorSet][6]);
+        bottomCenter.add(currentTurn);
+
+        //add panels from left to right
+        this.speechToggle = new toggleDisplay(true);
+        JPanel bottomRight = new toggleDisplay(false);
+        bottom.setLayout(new GridBagLayout());
+        GridBagConstraints manager = new GridBagConstraints();
+        manager.gridx = 0;
+        manager.gridy = 0;
+        manager.ipadx = 10;
+        manager.weightx = 0.28f;
+        manager.anchor = GridBagConstraints.WEST;
+        bottom.add(speechToggle, manager);
+        
+        manager.gridx = 2;
+        manager.gridy = 0;
+        manager.ipadx = 10;
+        manager.weightx = 0.28f;
+        manager.anchor = GridBagConstraints.EAST;
+        bottom.add(bottomRight, manager);
+        
+        manager.gridx = 1;
+        manager.gridy = 0;
+        manager.weightx = 0.44f;
+        bottomCenter.setMinimumSize(new Dimension(440, borderPanelSize));
+        manager.anchor = GridBagConstraints.CENTER;
+        bottom.add(bottomCenter, manager);
+
+        //create speech output at the top of the screen
         this.speechOutput = new JTextArea();
         speechOutput.setFont(new Font("Monospaced", Font.BOLD, 20));
         speechOutput.setBackground(Tag.ColorChoice[colorSet][6]);
         speechOutput.setForeground(Tag.ColorChoice[colorSet][9]);
         top.add(speechOutput, BorderLayout.NORTH);
+
+        //add all panels and board in corresponding spots
         boardPanel.add(top, BorderLayout.NORTH);
         boardPanel.add(left, BorderLayout.WEST);
         boardPanel.add(right, BorderLayout.EAST);
@@ -108,6 +158,76 @@ public abstract class GameGUI {
         this.gameGUI.setLocationRelativeTo(null);
         this.gameGUI.setVisible(true);
         this.gameGUI.setResizable(false);
+    }
+
+    public class toggleDisplay extends JPanel {
+        private boolean on;
+        private JPanel toggleLight;
+        private JTextArea topToggleText;
+        private JTextArea bottomToggleText;
+        /***
+         * creates toggle display for speech recognizer, bottom left corner is visible so colors are distinct, bottom right corner blends in with board and acts as spacer in gridbaglayout
+         * @param visible - true if visible (bottom left), false if blending in (bottom right)
+         */
+        public toggleDisplay(boolean visible) {
+            createToggleDisplay(visible);
+            on = false;
+        }
+        /***
+         * creates various components of toggleDisplay, sets them to distinct colors or same as board background depending on visible
+         * @param visible - true if board should stand out, false if board should blend in with background
+         */
+        public void createToggleDisplay(boolean visible) {
+            Color boardBackground = Tag.ColorChoice[colorSet][6];
+            this.setBackground(boardBackground);
+            this.setLayout(new FlowLayout(FlowLayout.LEFT));
+            //red or green light showing if toggle speech is on
+            this.toggleLight = new JPanel();
+            toggleLight.setPreferredSize(new Dimension(20, 20));
+            toggleLight.setBackground(visible ? Tag.ColorChoice[1][5] : boardBackground);
+            toggleLight.setBorder(BorderFactory.createLineBorder(visible ? Tag.ColorChoice[1][6] : boardBackground));
+            this.add(toggleLight);
+            //text next to toggleLight, split in two rows for space
+            this.topToggleText = new JTextArea("Press 'T' to");
+            topToggleText.setFont(new Font("Monospaced", Font.PLAIN, 10));
+            this.bottomToggleText  = new JTextArea("toggle speech on ");
+            bottomToggleText.setFont(new Font("Monospaced", Font.PLAIN, 10));
+            //JPanel with gridlayout to order top and bottom text
+            JPanel toggleTextWrapper = new JPanel();
+            toggleTextWrapper.setLayout(new GridLayout(2, 1, 0, 0));
+            toggleTextWrapper.setBackground(boardBackground);
+            topToggleText.setBackground(boardBackground);
+            topToggleText.setForeground(visible ? Tag.ColorChoice[colorSet][9] : boardBackground);
+            bottomToggleText.setBackground(boardBackground);
+            bottomToggleText.setForeground(visible ? Tag.ColorChoice[colorSet][9] : boardBackground);
+            toggleTextWrapper.add(topToggleText);
+            toggleTextWrapper.add(bottomToggleText);
+            this.add(toggleTextWrapper);
+        }
+        /***
+         * toggles switch and then updates light and text
+         */
+        public void toggleSwitch() {
+            speech.toggleIgnoreSpeechRecognitionResults();
+            on = !on;
+            updateLight();
+            updateText();
+        }
+        public void turnOffToggle() {
+            on = false;
+            speech.disableToggle();
+            updateLight();
+            updateText();
+        }
+        private void updateLight() {
+            toggleLight.setBackground(on ? Color.GREEN : Tag.ColorChoice[1][5]);
+        }
+        private void updateText() {
+            String updatedText = "toggle speech " + ((on) ? "off" : "on "); //space after on string to keep spacing consistent when toggleSwitch is called
+            bottomToggleText.replaceRange(updatedText, 0, bottomToggleText.getText().length());
+            if (!on)
+                clearSpeechOutput(); //no need to leave speech output up if speech recognizer is disabled
+        }
     }
 
     protected void addButtons() {
@@ -138,6 +258,22 @@ public abstract class GameGUI {
         System.out.println(buttons.getWidth() + ", " + buttons.getHeight());
     }
 
+    protected void addKeyBindings() {
+        this.boardGUI.getInputMap(IFW).put(KeyStroke.getKeyStroke("T"), "toggle");
+        this.boardGUI.getActionMap().put("toggle", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("toggle");
+                speechToggle.toggleSwitch();
+            }
+        });
+        this.boardGUI.getInputMap(IFW).put(KeyStroke.getKeyStroke(" "), "speak");
+        this.boardGUI.getActionMap().put("speak", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                speakItemActionPerformed(e);
+            }
+        });
+    }
+
     protected void speakItemActionPerformed(ActionEvent e) {
         try
         {
@@ -159,6 +295,7 @@ public abstract class GameGUI {
         int quit = JOptionPane.showConfirmDialog(gameGUI, message, "Main Menu", JOptionPane.OK_CANCEL_OPTION);
         if(quit == JOptionPane.OK_OPTION) {
             gameGUI.dispose();
+            speechToggle.turnOffToggle(); //make sure voice recognizer is reset to toggle off before another board is created
             main.mainMenu();
         }
     }
@@ -175,13 +312,20 @@ public abstract class GameGUI {
         }
     }
 
-    //board does not need to keep track of player names except when calling promotion, instead of adding even more parameters to board constructors to save names for this specifc case, this method takes a side and returns the corresponding name
+    /***
+     * used to get corresponding name for side, board only needs to know player name when creating promotion so it calls this method instead of taking both names as additional constructor parameters and storing them
+     * @param side - side that board needs name for
+     * @return - name that corresponds to side
+     */
     public String getTurnPlayerName(Side side)
     {
         return (side == Side.WHITE ? playerOneName : playerTwoName);
     }
 
-    //following methods are used to add/change text above and below board
+    /***
+     * called by board, displays what speech recognizer heard
+     * @param speech
+     */
     public void updateSpeechOutput(String speech)
     {
         String replace;
@@ -192,7 +336,10 @@ public abstract class GameGUI {
         speechOutput.replaceRange(replace, 0, speechOutput.getText().length());
     }
 
-    //if move is invalid, add reason its invalid in paranthesis if there is already text there (speech recognition)
+    /***
+     * this updates the top of the board and adds the reason that a given move is invalid
+     * @param invalid - reason that move is invalid, such as not in piece's moveset or attacking friendly piece
+     */
     public void updateInvalidMove(String invalid)
     {
         if (speechOutput.getText().length() == 0)
@@ -201,6 +348,9 @@ public abstract class GameGUI {
             speechOutput.append(" (" + invalid + ")");
     }
 
+    /***
+     * called after move is made and there is no need to display previous speech output
+     */
     public void clearSpeechOutput()
     {
         if (speechOutput.getText().length() != 0)
@@ -213,19 +363,14 @@ public abstract class GameGUI {
      */
     public abstract void updateCurrentTurn(Side side);
 
-    //changes bottom string below board to "Current turn: name (in check)"
-    public void updateTurnCheck()
-    {
-        currentTurn.append(" (in check)");
-    }
+    /***
+     * updates special status for turns
+     */
+    public abstract void updateTurnStatus();
 
-    //replaces top text with checkmate, bottom text with winner name
-    public void updateCheckMate(Side side)
-    {
-        speechOutput.replaceRange("Checkmate", 0, speechOutput.getText().length());
-        if (side == Side.WHITE)
-            currentTurn.replaceRange("Winner: " + playerOneName, 0, currentTurn.getText().length());
-        else
-            currentTurn.replaceRange("Winner: " + playerTwoName, 0, currentTurn.getText().length());
-    }
+    /***
+     * call when game has ended and the GUI will display winner
+     * @param side - winning side
+     */
+    public abstract void updateGameOver(Side side);
 }

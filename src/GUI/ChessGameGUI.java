@@ -1,6 +1,7 @@
 package GUI;
 
 import java.awt.BorderLayout;
+import java.awt.event.KeyListener;
 import java.awt.event.ActionEvent;
 
 import javax.swing.ImageIcon;
@@ -88,5 +89,20 @@ public class ChessGameGUI extends GameGUI {
         System.out.println(playerOneName);
         System.out.println(playerTwoName);
         currentTurn.replaceRange(replace, 0, currentTurn.getText().length());
+    }
+
+    /***
+     * called at start of turn if player was placed in check
+     */
+    public void updateTurnStatus() {
+        currentTurn.append(" (in check)");
+    }
+
+    public void updateGameOver(Side side) {
+        speechOutput.replaceRange("Checkmate", 0, speechOutput.getText().length());
+        if (side == Side.WHITE)
+            currentTurn.replaceRange("Winner: " + playerOneName, 0, currentTurn.getText().length());
+        else
+            currentTurn.replaceRange("Winner: " + playerTwoName, 0, currentTurn.getText().length());
     }
 }

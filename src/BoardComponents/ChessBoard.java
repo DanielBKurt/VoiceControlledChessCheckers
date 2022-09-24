@@ -135,12 +135,12 @@ public class ChessBoard extends Board {
                 {
                     wKing.getPosition().setCheckmate(true);
                     turn = Side.OVER;
-                    gameGUI.updateCheckMate(Side.BLACK);
+                    gameGUI.updateGameOver(Side.BLACK);
                 }
                 else
                 {
                     wKing.getPosition().setCheck(true);
-                    gameGUI.updateTurnCheck();
+                    gameGUI.updateTurnStatus();
                 }
             }
         }
@@ -153,12 +153,12 @@ public class ChessBoard extends Board {
                 {
                     bKing.getPosition().setCheckmate(true);
                     turn = Side.OVER;
-                    gameGUI.updateCheckMate(Side.WHITE);
+                    gameGUI.updateGameOver(Side.WHITE);
                 }
                 else
                 {
                     bKing.getPosition().setCheck(true);
-                    gameGUI.updateTurnCheck();
+                    gameGUI.updateTurnStatus();
                 }
             }
         }
