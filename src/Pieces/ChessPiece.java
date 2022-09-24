@@ -3,6 +3,8 @@ package Pieces;
 import java.util.List;
 import java.util.ArrayList;
 
+import java.awt.Graphics;
+
 import Information.Tag;
 import Information.Tag.Side;
 
@@ -12,6 +14,8 @@ public abstract class ChessPiece extends Piece {
     public ChessPiece(Side side, Position start, String imageFileName) {
         super(side, start, imageFileName);
     }
+
+    public void draw(Graphics g) { g.drawImage(this.getImage(), 4, 0, null); };
 
     /***
      * checks if position is either open or occupied by enemy piece, called by king and knight

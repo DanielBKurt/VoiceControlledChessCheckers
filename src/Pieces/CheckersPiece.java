@@ -3,6 +3,8 @@ package Pieces;
 import java.util.List;
 import java.util.ArrayList;
 
+import java.awt.Graphics;
+
 import Information.Tag.Side;
 
 import BoardComponents.Position;
@@ -14,6 +16,8 @@ public abstract class CheckersPiece extends Piece {
         super(side, start, imageFileName);
         this.board = checkersBoard;
     }
+
+    public void draw(Graphics g) { g.drawImage(this.getImage(), 2, -1, null); };
 
     public List<Position> checkForward(Position[][] gameBoard, int direction) {
         List<Position> legalPositions = new ArrayList<>();

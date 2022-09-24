@@ -139,12 +139,28 @@ public class Position extends JComponent {
             else if (checkmate) g.setColor(Tag.ColorChoice[colorSet][5]);
             else g.setColor(Tag.ColorChoice[colorSet][0]);
         }
+        /*
+        if(this.ligherShade) { 
+            if(highLight) this.setBackground(Tag.ColorChoice[colorSet][3]);
+            else if (selected) this.setBackground(blend(Tag.ColorChoice[colorSet][1], Tag.ColorChoice[colorSet][4], 0.3f));
+            else if (check) this.setBackground(blend(Tag.ColorChoice[colorSet][1], Tag.ColorChoice[colorSet][5], 0.45f));
+            else if (checkmate) this.setBackground(Tag.ColorChoice[colorSet][5]);
+            else this.setBackground(Tag.ColorChoice[colorSet][1]);
+        } else {
+            if(highLight) this.setBackground(Tag.ColorChoice[colorSet][2]);
+            else if (selected) this.setBackground(blend(Tag.ColorChoice[colorSet][0], Tag.ColorChoice[colorSet][4], 0.3f));
+            else if (check) this.setBackground(blend(Tag.ColorChoice[colorSet][0], Tag.ColorChoice[colorSet][5], (colorSet == 2 ? 0.55f : 0.3f))); //red mixes really badly with the dark green so special check for if its green board
+            else if (checkmate) this.setBackground(Tag.ColorChoice[colorSet][5]);
+            else this.setBackground(Tag.ColorChoice[colorSet][0]);
+        }
+        */
 
         // highlight position
         if(highLight) this.setBorder(BorderFactory.createEtchedBorder(LIGHT_BORDER, DARK_BORDER));
         else this.setBorder(BorderFactory.createEmptyBorder());
 
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
+        //this.setBackground(g.getColor());
         // display piece if it is at current position
         if(this.piece != null && displayPiece)
             piece.draw(g);

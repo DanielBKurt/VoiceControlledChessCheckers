@@ -48,7 +48,7 @@ public class CheckersGameGUI extends GameGUI {
 
     protected void createFrame() {
         gameGUI = new JFrame("Voice Controlled Checkers");
-        gameGUI.setIconImage(new ImageIcon(Tag.LAZY_ICON).getImage());
+        gameGUI.setIconImage(new ImageIcon(Tag.RED_CHECKERS_LOGO).getImage());
         this.gameGUI.setLayout(new BorderLayout(0, 0));
         this.gameGUI.getContentPane().setBackground(Tag.ColorChoice[colorSet][6]);
     }

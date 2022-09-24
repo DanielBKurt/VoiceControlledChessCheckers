@@ -49,7 +49,7 @@ public abstract class Piece {
     public boolean isDead() { return this.alive == false; }
     public Position getPosition() { return this.position; }
     public Image getImage() { return this.image; }
-    public void draw(Graphics g) { g.drawImage(this.getImage(), this.getPosition().getPosX(), this.getPosition().getPosY(), null); }
+    public abstract void draw(Graphics g);
 
     /***
      * tries to move this piece to given position

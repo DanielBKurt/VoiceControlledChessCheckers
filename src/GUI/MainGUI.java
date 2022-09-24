@@ -14,6 +14,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTextPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JRadioButton;
@@ -21,6 +22,8 @@ import javax.swing.JTextArea;
 import javax.swing.ButtonGroup;
 import javax.swing.SwingUtilities;
 import javax.swing.BorderFactory;
+import javax.swing.text.EditorKit;
+import javax.swing.text.StyledEditorKit;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -89,14 +92,25 @@ public class MainGUI implements Runnable {
 
     private void addGameTitle() {
         gameTitlePanel = new JPanel();
-        JLabel title = new JLabel(Tag.TITLE);
-        title.setFont(new Font("Monospaced", Font.BOLD, 35));
-        title.setForeground(Tag.ColorChoice[1][9]);
-        title.setBackground(Tag.ColorChoice[1][6]);
+        gameTitlePanel.setLayout(new GridLayout(3, 1, 0, 0));
+        JLabel top = new JLabel("Voice Controlled Chess", JLabel.CENTER);
+        JLabel bottom = new JLabel("and Checkers", JLabel.CENTER);
+        top.setHorizontalAlignment(JTextField.CENTER);
+        bottom.setHorizontalAlignment(JTextField.CENTER);
+        top.setFont(new Font("Monospaced", Font.BOLD, 35));
+        top.setForeground(Tag.ColorChoice[1][9]);
+        top.setBackground(Tag.ColorChoice[1][6]);
+        bottom.setFont(new Font("Monospaced", Font.BOLD, 35));
+        bottom.setForeground(Tag.ColorChoice[1][9]);
+        bottom.setBackground(Tag.ColorChoice[1][6]);
         gameTitlePanel.setBackground(Tag.ColorChoice[1][6]);
-        gameTitlePanel.setPreferredSize(new Dimension(600, 200));
-        gameTitlePanel.add(title);
+        gameTitlePanel.add(top);
+        gameTitlePanel.add(bottom);
+        JLabel bottomSpacer = new JLabel();
+        bottomSpacer.setBackground(Tag.ColorChoice[1][6]);
+        gameTitlePanel.add(bottomSpacer);
         mainGUI.add(gameTitlePanel, BorderLayout.NORTH);
+        gameTitlePanel.setPreferredSize(new Dimension(600, 200));
     }
 
     /***
@@ -105,8 +119,8 @@ public class MainGUI implements Runnable {
     private void addPlayerFields() {
         JLabel whiteChessIcon = new JLabel(new ImageIcon((Tag.WHITE_KING)));
         JLabel blackChessIcon = new JLabel(new ImageIcon((Tag.BLACK_KING)));
-        JLabel blackCheckersIcon = new JLabel(new ImageIcon((Tag.BLACK_KING)));
-        JLabel redCheckersIcon = new JLabel(new ImageIcon((Tag.WHITE_KING)));
+        JLabel blackCheckersIcon = new JLabel(new ImageIcon((Tag.BLACK_CHECKERS_LOGO)));
+        JLabel redCheckersIcon = new JLabel(new ImageIcon((Tag.RED_CHECKERS_LOGO)));
         JButton playChess = new JButton("Play");
         JButton playCheckers = new JButton("Play");
         JButton loadChess = new JButton("Load");

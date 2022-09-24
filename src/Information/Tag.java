@@ -21,9 +21,9 @@ public class Tag {
     public static final int IMAGE_HEIGHT = 75;
     
     // lazy chess icon
-    public static final String LAZY_ICON = "assets\\lazy_chess_icon.jpg";
+    public static final String LAZY_ICON = "assets\\black_king.png";
     public static final String SETTINGS_LOGO = "assets\\settings_logo.png";
-    public static final String TITLE = "Voice Controlled Chess";
+    public static final String TITLE = "Voice Controlled Chess and Checkers";
 
     // white piece images
     public static final String WHITE_KING = "assets\\white_king.png";
@@ -42,12 +42,16 @@ public class Tag {
     public static final String BLACK_PAWN = "assets\\black_pawn.png";
 
     // black checkers pieces
-    public static final String BLACK_CHECKERS_PAWN = "assets\\black_pawn.png";
-    public static final String BLACK_CHECKERS_KING = "assets\\black_king.png";
+    public static final String BLACK_CHECKERS_PAWN = "assets\\black_checkers_pawn.png";
+    public static final String BLACK_CHECKERS_KING = "assets\\black_checkers_king.png";
 
     // red checkers pieces
-    public static final String RED_CHECKERS_PAWN = "assets\\white_pawn.png";
-    public static final String RED_CHECKERS_KING = "assets\\white_king.png";
+    public static final String RED_CHECKERS_PAWN = "assets\\red_checkers_pawn.png";
+    public static final String RED_CHECKERS_KING = "assets\\red_checkers_king.png";
+
+    // checkers logos
+    public static final String RED_CHECKERS_LOGO = "assets\\red_checkers_logo.png";
+    public static final String BLACK_CHECKERS_LOGO = "assets\\black_checkers_logo.png";
 
     // const for board size
     public static final int SIZE_MAX = 8;
