@@ -1,7 +1,6 @@
 package GUI;
 
 import java.awt.BorderLayout;
-import java.awt.event.KeyListener;
 import java.awt.event.ActionEvent;
 
 import javax.swing.ImageIcon;
@@ -56,7 +55,10 @@ public class ChessGameGUI extends GameGUI {
     protected void saveItemActionPerformed(ActionEvent e) {
         if (!boardGUI.canSave())
         {
-            speechOutput.replaceRange("Can not save a finished game", 0, speechOutput.getText().length());
+            if (boardGUI.getTurn() == Side.OVER)
+                speechOutput.replaceRange("Can not save a finished game", 0, speechOutput.getText().length());
+            else
+                speechOutput.replaceRange("Please promote the pawn before saving", 0, speechOutput.getText().length());
         }
         else
         {
@@ -91,18 +93,12 @@ public class ChessGameGUI extends GameGUI {
         currentTurn.replaceRange(replace, 0, currentTurn.getText().length());
     }
 
-    /***
-     * called at start of turn if player was placed in check
-     */
-    public void updateTurnStatus() {
-        currentTurn.append(" (in check)");
-    }
-
-    public void updateGameOver(Side side) {
-        speechOutput.replaceRange("Checkmate", 0, speechOutput.getText().length());
-        if (side == Side.WHITE)
-            currentTurn.replaceRange("Winner: " + playerOneName, 0, currentTurn.getText().length());
+    public void updateGameOver(Side side, String endCondition) {
+        speechOutput.replaceRange(endCondition, 0, speechOutput.getText().length());
+        String playerName = getTurnPlayerName(side);
+        if (endCondition.equals("Stalemate")) //no winner so bottom text needs special label
+            currentTurn.replaceRange(playerName + " has no remaining moves", 0, currentTurn.getText().length());
         else
-            currentTurn.replaceRange("Winner: " + playerTwoName, 0, currentTurn.getText().length());
+            currentTurn.replaceRange("Winner: " + playerName, 0, currentTurn.getText().length());
     }
 }

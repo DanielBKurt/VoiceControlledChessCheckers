@@ -7,23 +7,18 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
-import java.awt.event.ActionListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JTextPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JRadioButton;
-import javax.swing.JTextArea;
 import javax.swing.ButtonGroup;
 import javax.swing.SwingUtilities;
 import javax.swing.BorderFactory;
-import javax.swing.text.EditorKit;
-import javax.swing.text.StyledEditorKit;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -36,7 +31,6 @@ import SpeechRecognizer.SpeechRecognizerMain;
 
 public class MainGUI implements Runnable {
     private SpeechRecognizerMain speech = new SpeechRecognizerMain();
-    private static final int VERTICAL_SPACE = 50;
     private static final int COLUMN_SPACE = 10;
     private int colorSet;
 
@@ -81,6 +75,9 @@ public class MainGUI implements Runnable {
         addButtons();
     }
 
+    /***
+     * 
+     */
     private void createFrame() {
         mainGUI = new JFrame(Tag.TITLE);
         mainGUI.setIconImage(new ImageIcon(Tag.LAZY_ICON).getImage());
@@ -90,6 +87,9 @@ public class MainGUI implements Runnable {
         mainGUI.setLocationRelativeTo(null);
     }
 
+    /***
+     * creates and formats text at the top of the frame
+     */
     private void addGameTitle() {
         gameTitlePanel = new JPanel();
         gameTitlePanel.setLayout(new GridLayout(3, 1, 0, 0));
@@ -114,7 +114,7 @@ public class MainGUI implements Runnable {
     }
 
     /***
-     * initializes player fields, middle of the screen, includes play and load buttons, chess and checkers logos, and playertextfields
+     * initializes player fields, middle of the frame, includes play and load buttons, chess and checkers logos, and playertextfields
      */
     private void addPlayerFields() {
         JLabel whiteChessIcon = new JLabel(new ImageIcon((Tag.WHITE_KING)));
@@ -284,6 +284,10 @@ public class MainGUI implements Runnable {
             exit();
         }
     }
+
+    /***
+     * called by quit buttons in main and game GUI, public so that gameGUI can access it, otherwise gameGUI would be disposed and mainGUI would just be invisible, leaving the program running
+     */
     public void exit() {
         speech.stopSpeechRecognizerThread();
         mainGUI.dispatchEvent(new WindowEvent(mainGUI, WindowEvent.WINDOW_CLOSING));
@@ -294,98 +298,139 @@ public class MainGUI implements Runnable {
      * @param e - default actionevent
      */
     private void settingsItemActionPerformed(ActionEvent e) {
-        JFrame settings = new JFrame("Settings");
-        settings.setIconImage(new ImageIcon(Tag.SETTINGS_LOGO).getImage());
-        settings.setSize(300, 450);
-        settings.setLocationRelativeTo(mainGUI);
-        JPanel instructions = new JPanel();
-        JTextArea text = new JTextArea("Please select your preferred\n   color and press apply");
-        text.setBackground(Tag.ColorChoice[1][6]);
-        text.setForeground(Tag.ColorChoice[1][9]);
-        text.setFont(new Font("Monospaced", Font.BOLD, 14));
-        instructions.add(text);
-        instructions.setBackground(Tag.ColorChoice[1][6]);
-        instructions.setPreferredSize(new Dimension(300, 50));
-        settings.add(instructions, BorderLayout.NORTH);
-        //main panel holds buttons and demos of board colors
-        JPanel mainPanel = new JPanel();
-        mainPanel.setBackground(Tag.ColorChoice[1][6]);
-        mainPanel.setPreferredSize(new Dimension(300, 300));
-        mainPanel.setLayout(null);
-        JRadioButton colorSetOne = new JRadioButton();
-        colorSetOne.setBackground(Tag.ColorChoice[1][6]);
-        JRadioButton colorSetTwo = new JRadioButton();
-        colorSetTwo.setBackground(Tag.ColorChoice[1][6]);
-        JRadioButton colorSetThree = new JRadioButton();
-        colorSetThree.setBackground(Tag.ColorChoice[1][6]);
-        ButtonGroup bg = new ButtonGroup();
-        bg.add(colorSetOne);
-        bg.add(colorSetTwo);
-        bg.add(colorSetThree);
-        mainPanel.add(colorSetOne);
-        mainPanel.add(colorSetTwo);
-        mainPanel.add(colorSetThree);
-        if (colorSet == 0)
-            colorSetOne.setSelected(true);
-        else if (colorSet == 1)
-            colorSetTwo.setSelected(true);
-        else //colorSetThree
-            colorSetThree.setSelected(true);
-        colorSetOne.setBounds(100, 50, 50, 20);
-        colorSetTwo.setBounds(100, 125, 50, 20);
-        colorSetThree.setBounds(100, 200, 50, 20);
-        //loop through and display create displayBoard for each color set
-        for (int i = 0; i < Tag.ColorChoice.length; i++)
-        {
-            JPanel displayBoard = new JPanel();
-            displayBoard.setLayout(new GridLayout(2, 2, 0, 0));
-            displayBoard.add(new Position(0, 6, false, 10, i));
-            displayBoard.add(new Position(1, 6, true, 10, i));
-            displayBoard.add(new Position(0, 7, true, 10, i));
-            displayBoard.add(new Position(1, 7, false, 10, i));
-            displayBoard.setPreferredSize(new Dimension(50, 50));
-            displayBoard.setBorder(BorderFactory.createLineBorder(Tag.ColorChoice[i][7]));
-            mainPanel.add(displayBoard);
-            displayBoard.setBounds(30, 35 + (i * 75), 50,50); //shifts each down to corresponding buttons
+        new Settings(); //no need to do anything further such as save reference to or dispose settings instance, settings automatically disposes itself when the user either applies or clicks on another window
+    }
+    public class Settings extends JFrame {
+        //radio buttons saved as class members so that apply item action can see which radio button is selected
+        JRadioButton colorSetOne;
+        JRadioButton colorSetTwo;
+        JRadioButton colorSetThree;
+        public Settings() {
+            this.setIconImage(new ImageIcon(Tag.SETTINGS_LOGO).getImage());
+            this.setSize(300, 450);
+            this.setLocationRelativeTo(mainGUI);
+            createInstructions();
+            createDemoDisplays();
+            createApplyButton();
+            this.setResizable(false);
+            this.setVisible(true);
+            this.addWindowFocusListener( new WindowFocusListener() {
+                //implemented because settings window would otherwise stay open when you do anything else with the main menu, including starting a game
+                @Override
+                public void windowLostFocus(WindowEvent event) {
+                    closeWindow();
+                }
+                //has to be overwritten for windowFocusListener, not used so left empty
+                @Override
+                public void windowGainedFocus(WindowEvent event) { }
+            });
         }
-        JButton apply = new JButton("Apply");
-        apply.setBackground(Tag.ColorChoice[1][7]);
-        JPanel buttonWrapper = new JPanel();
-        buttonWrapper.setPreferredSize(new Dimension(300, 50));
-        buttonWrapper.setBackground(Tag.ColorChoice[1][6]);
-        buttonWrapper.add(apply);
-        settings.add(mainPanel);
-        settings.add(buttonWrapper, BorderLayout.SOUTH);
-        settings.setResizable(false);
-        settings.setVisible(true);
-        apply.addActionListener( new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                if (colorSetOne.isSelected())
-                    colorSet = 0;
-                else if (colorSetTwo.isSelected())
-                    colorSet = 1;
-                else //colorSetThree
-                    colorSet = 2;
-                try {
-                    FileWriter writer = new FileWriter("./savedgames/Settings.txt", false);
-                    writer.write(String.valueOf(colorSet));
-                    writer.close();
-                }
-                catch (Exception error) {
-                    error.getStackTrace();
-                }
-                settings.dispose();
+
+        /***
+         * disposes this, separated method so that windowLostFocus can call it as this in windowLostFocus is a WindowFocusListener, not settings
+         */
+        public void closeWindow() { this.dispose(); };
+
+        /***
+         * creates instructions text at the top of the frame
+         */
+        private void createInstructions() {
+            JPanel instructions = new JPanel();
+            instructions.setLayout(new GridLayout(2, 1, 0, 0));
+            //create across two JLabels so that text fits within frame
+            JLabel top = new JLabel("Please select your preferred", JLabel.CENTER);
+            JLabel bottom = new JLabel("color and press apply", JLabel.CENTER);
+            top.setHorizontalAlignment(JTextField.CENTER);
+            bottom.setHorizontalAlignment(JTextField.CENTER);
+            top.setBackground(Tag.ColorChoice[1][6]);
+            top.setForeground(Tag.ColorChoice[1][9]);
+            top.setFont(new Font("Monospaced", Font.BOLD, 14));
+            bottom.setBackground(Tag.ColorChoice[1][6]);
+            bottom.setForeground(Tag.ColorChoice[1][9]);
+            bottom.setFont(new Font("Monospaced", Font.BOLD, 14));
+            instructions.add(top);
+            instructions.add(bottom);
+            instructions.setBackground(Tag.ColorChoice[1][6]);
+            instructions.setPreferredSize(new Dimension(300, 50));
+            this.add(instructions, BorderLayout.NORTH);
+        }
+
+        /***
+         * creates radio buttons and previews of board colors in the middle of frame
+         */
+        private void createDemoDisplays() {
+            JPanel mainPanel = new JPanel();
+            mainPanel.setBackground(Tag.ColorChoice[1][6]);
+            mainPanel.setPreferredSize(new Dimension(300, 300));
+            mainPanel.setLayout(null);
+            colorSetOne = new JRadioButton();
+            colorSetOne.setBackground(Tag.ColorChoice[1][6]);
+            colorSetTwo = new JRadioButton();
+            colorSetTwo.setBackground(Tag.ColorChoice[1][6]);
+            colorSetThree = new JRadioButton();
+            colorSetThree.setBackground(Tag.ColorChoice[1][6]);
+            ButtonGroup bg = new ButtonGroup();
+            bg.add(colorSetOne);
+            bg.add(colorSetTwo);
+            bg.add(colorSetThree);
+            mainPanel.add(colorSetOne);
+            mainPanel.add(colorSetTwo);
+            mainPanel.add(colorSetThree);
+            if (colorSet == 0)
+                colorSetOne.setSelected(true);
+            else if (colorSet == 1)
+                colorSetTwo.setSelected(true);
+            else //colorSetThree
+                colorSetThree.setSelected(true);
+            colorSetOne.setBounds(100, 50, 50, 20);
+            colorSetTwo.setBounds(100, 125, 50, 20);
+            colorSetThree.setBounds(100, 200, 50, 20);
+            //loop through and display create displayBoard for each color set
+            for (int i = 0; i < Tag.ColorChoice.length; i++)
+            {
+                JPanel displayBoard = new JPanel();
+                displayBoard.setLayout(new GridLayout(2, 2, 0, 0));
+                displayBoard.add(new Position(0, 6, false, 10, i));
+                displayBoard.add(new Position(1, 6, true, 10, i));
+                displayBoard.add(new Position(0, 7, true, 10, i));
+                displayBoard.add(new Position(1, 7, false, 10, i));
+                displayBoard.setPreferredSize(new Dimension(50, 50));
+                displayBoard.setBorder(BorderFactory.createLineBorder(Tag.ColorChoice[i][7]));
+                mainPanel.add(displayBoard);
+                displayBoard.setBounds(30, 35 + (i * 75), 50,50); //shifts each down to corresponding buttons
             }
-        });
-        settings.addWindowFocusListener( new WindowFocusListener() {
-            //implemented because settings window would otherwise stay open when you do anything else with the main menu, including starting a game
-            @Override
-            public void windowLostFocus(WindowEvent event) {
-                settings.dispose();
+            this.add(mainPanel);
+        }
+
+        /***
+         * creates apply button at the bottom of the board and assigns it an action listener
+         */
+        private void createApplyButton() {
+            JButton apply = new JButton("Apply");
+            apply.setBackground(Tag.ColorChoice[1][7]);
+            apply.addActionListener(e -> applyItemActionPerformed(e));
+            JPanel buttonWrapper = new JPanel();
+            buttonWrapper.setPreferredSize(new Dimension(300, 50));
+            buttonWrapper.setBackground(Tag.ColorChoice[1][6]);
+            buttonWrapper.add(apply);
+            this.add(buttonWrapper, BorderLayout.SOUTH);
+        }
+        private void applyItemActionPerformed(ActionEvent e) {
+            if (colorSetOne.isSelected())
+                colorSet = 0;
+            else if (colorSetTwo.isSelected())
+                colorSet = 1;
+            else //colorSetThree
+                colorSet = 2;
+            try {
+                FileWriter writer = new FileWriter("./savedgames/Settings.txt", false);
+                writer.write(String.valueOf(colorSet));
+                writer.close();
             }
-            //has to be overwritten for windowFocusListener, not used so left empty
-            @Override
-            public void windowGainedFocus(WindowEvent event) { }
-        });
+            catch (Exception error) {
+                error.getStackTrace();
+            }
+            this.dispose(); //close once user is done selecting and colorSet has been updated
+        }
     }
 }

@@ -1,7 +1,5 @@
 package BoardComponents;
 
-import java.util.List;
-
 import GUI.GameGUI;
 
 import Information.Tag;
@@ -36,9 +34,9 @@ public class CheckersBoard extends Board {
 
     /***
      * called by pieces when looking for legal moves
-     * @return - true if current player already attacked, false otherwise
+     * @return - true if current player can attack, false otherwise
      */
-    public boolean getAttackMade() { return this.attackMade; }
+    public boolean getAvailableAttacks() { return this.availableAttacks; }
 
     /***
      * swaps current turn, updates gameGUI
@@ -54,17 +52,33 @@ public class CheckersBoard extends Board {
             turn = (this.turn == Side.BLACK) ? Side.RED : Side.BLACK;
             gameGUI.updateCurrentTurn(turn);
             availableAttacks = false;
-            int availableMoves = 0;
+            //find friendly and enemy moves and pieces left after each move, identifies if game is over and what win condition was
+            int availableFriendlyMoves = 0;
+            int friendlyPieces = 0;
+            //setAvailableAttack is called in getLegalMoves if there is an attack, both friendlyPieces and availableFriendlyMoves >= 1 if availableAttacks is true so loop can end once attack is found
+            //game is over if there are zero available moves left for either side, tracking pieces just identifies if win condition was blocking remaining pieces or taking all pieces
             for (int y = 0; y < Tag.SIZE_MAX && !availableAttacks; y++)
             {
                 for (int x = 0; x < Tag.SIZE_MAX && !availableAttacks; x++)
                 {
                     if (!gameBoard[y][x].isFree() && gameBoard[y][x].getPiece().getSide() == turn)
-                        availableMoves += gameBoard[y][x].getPiece().getLegalMoves(gameBoard).size();
+                    {
+                        friendlyPieces++;
+                        availableFriendlyMoves += gameBoard[y][x].getPiece().getLegalMoves(gameBoard).size();
+                    }
                 }
             }
-            if (availableMoves == 0)
+            if (availableFriendlyMoves == 0) //this player loses
+            {
+                if (friendlyPieces == 0) //no remaining pieces
+                    gameGUI.updateGameOver(this.turn == Side.BLACK ? Side.RED : Side.BLACK, "No Remaining Pieces"); //current player has no moves left, therefor other player wins
+                else //remaining pieces were blocked in
+                    gameGUI.updateGameOver(this.turn == Side.BLACK ? Side.RED : Side.BLACK, "No Remaining Moves"); //current player has no moves left, therefor other player wins
                 turn = Side.OVER;
+            }
+            else if (availableAttacks)
+                gameGUI.updateTurnStatus(" (must attack)");
+            //check if other player moved themself into spot with no moves left on previous move? depends on whether this player can move and unblock any of other players moves or whether this players blocking pieces are also blocked in/can only take
         }
     }
 
@@ -82,20 +96,25 @@ public class CheckersBoard extends Board {
     }
 
     protected void deselectPiece() {
+        if (attackMade && (selectedPiece != null && selectedPiece.getLegalMoves(gameBoard).size() > 0)) //can not unselect after attack is made if there are more attacks, player must continue;
+            return;
         if(selectedPiece != null) {
             selectedPiece.getPosition().setSelect(false);
             dehighlightlegalPositions(selectedMovablePositions);
             selectedPiece = null;
         }
-        if (attackMade)
+        if (attackMade) //if, not else if or else because piece should be cleared if it is not null and deselect should only change turns after piece is done making moves
             nextTurn();
     }
 
+    /***
+     * checks if program can save, prevents saving after game is over and halfway through attack
+     */
     public boolean canSave() { return (this.turn != Side.OVER && !attackMade); }
 
     /***
      * stores relevant board information as a string, called by save button and by moveLegal to create copy of board
-     * @return - board color, current turn, all piece names, current locations, and position of en passant pawn
+     * @return - board color, current turn, all piece names, current locations
      */
     public String asString()
     {

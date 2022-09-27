@@ -1,11 +1,13 @@
 package BoardComponents;
 
+import java.util.List;
+import java.util.HashMap;
+
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -24,6 +26,8 @@ public abstract class Board extends JPanel implements MouseListener {
     protected GameGUI gameGUI;
     protected Position[][] gameBoard;
     protected Piece selectedPiece;
+    protected HashMap<String, Integer> letters;
+    protected HashMap<String, Integer> numbers;
     public List<Position> selectedMovablePositions;
     
     /***
@@ -34,7 +38,7 @@ public abstract class Board extends JPanel implements MouseListener {
     public Board(GameGUI gui, int colorSet) {
         this.setGameGUI(gui);
         this.setGameBoard(new Position[Tag.SIZE_MAX][Tag.SIZE_MAX]);
-        setLayout(new GridLayout(Tag.SIZE_MAX, Tag.SIZE_MAX, 0, 0));
+        this.setLayout(new GridLayout(Tag.SIZE_MAX, Tag.SIZE_MAX, 0, 0));
         this.colorSet = colorSet;
         this.addMouseListener(this);
         this.createNewBoardPositions();
@@ -42,6 +46,7 @@ public abstract class Board extends JPanel implements MouseListener {
         this.setPanelDimensions(FRA_DIMENSION);
         this.setBorder(BorderFactory.createEmptyBorder());
         this.saved = true;
+        this.initializeWordMaps();
     }
 
     /***
@@ -59,9 +64,9 @@ public abstract class Board extends JPanel implements MouseListener {
         else //black
             this.setTurn(Side.BLACK);
         this.setGameBoard(new Position[Tag.SIZE_MAX][Tag.SIZE_MAX]);
-        setLayout(new GridLayout(Tag.SIZE_MAX, Tag.SIZE_MAX, 0, 0));
-        createNewBoardPositions();
-        initializePiecesToBoard(pieces);
+        this.setLayout(new GridLayout(Tag.SIZE_MAX, Tag.SIZE_MAX, 0, 0));
+        this.createNewBoardPositions();
+        this.initializePiecesToBoard(pieces);
     }
 
     /***
@@ -77,6 +82,7 @@ public abstract class Board extends JPanel implements MouseListener {
         this.setPanelDimensions(FRA_DIMENSION);
         this.setBorder(BorderFactory.createEmptyBorder());
         this.saved = true;
+        this.initializeWordMaps();
     }
 
     /***
@@ -108,10 +114,35 @@ public abstract class Board extends JPanel implements MouseListener {
     protected abstract void initializePiecesToBoard(String[] pieces);
     
     /***
+     * initializes and fills maps for letters and numbers, used by speechCalled method
+     */
+    protected void initializeWordMaps() {
+        letters = new HashMap<String, Integer>();
+        letters.put("alpha", 0);
+        letters.put("bravo", 1);
+        letters.put("charlie", 2);
+        letters.put("delta", 3);
+        letters.put("echo", 4);
+        letters.put("foxtrot", 5);
+        letters.put("golf", 6);
+        letters.put("hotel", 7);
+        //top row on UI is marked as 8 but that is 0th row in 2D array gameBoard, bottom row is 1 on UI and 7 in gameBoard, map accordingly
+        numbers = new HashMap<String, Integer>();
+        numbers.put("one", 7);
+        numbers.put("two", 6);
+        numbers.put("three", 5);
+        numbers.put("four", 4);
+        numbers.put("five", 3);
+        numbers.put("six", 2);
+        numbers.put("seven", 1);
+        numbers.put("eight", 0);
+    }
+
+    /***
      * calls all relevant JPanel methods to set the size of the board
      * @param size - dimension that panel should be set to
      */
-    private void setPanelDimensions(Dimension size){
+    private void setPanelDimensions(Dimension size) {
         this.setPreferredSize(size);
         this.setMaximumSize(size);
         this.setMinimumSize(size);
@@ -233,23 +264,9 @@ public abstract class Board extends JPanel implements MouseListener {
         	System.out.println("I did not understand what you said");
     		return;
         }
-        String[] xcoords = {"alpha", "bravo", "charlie", "delta", "echo",
-                            "foxtrot", "golf", "hotel"};
-        String[] ycoords = {"one", "two", "three", "four", "five", "six",
-                            "seven", "eight"};
-        //save index of identified words (from 0 to 7, like gameBoard which is 2D with range 0 to 7), alpha and one = 0, hotel and eight = 7
-        int x = 0;
-        int y = 0;
-        for (int i = 0; i < 8; i++)
-        {
-            if (xcoords[i].equals(coordinates[0]))
-                x = i;
-            if (ycoords[i].equals(coordinates[1]))
-                y = i;
-        }
 
         //squares are labelled as x y (alpha one) but gameBoard is [y][x] so access as one alpha, top row of gameBoard (row 0) is row 8 on GUI and bottom row (row 7) is 1 on GUI so subtract yCoords index from 7 to find corresponding position
-        Position spokenPosition = gameBoard[7 - y][x];
+        Position spokenPosition = gameBoard[numbers.get(coordinates[1])][letters.get(coordinates[0])];
 
         if(selectedPiece == null) 
         {
@@ -271,9 +288,22 @@ public abstract class Board extends JPanel implements MouseListener {
         repaint();
     }
 
+    /***
+     * this method moves the selected piece to the chosen location (as long as the move is legal) and handles special cases
+     * @param chosen - position the selected piece is moving to
+     */
     protected abstract void attemptMove(Position chosen);
 
+    /***
+     * helper method for attemptMove, if move is legal this method actually makes the move and unhighlights selected and legalMoves squares
+     * @param chosen
+     */
     protected abstract void moveAndUnhighlight(Position chosen);
+
+    /***
+     * called by gameGUI when either main menu or quit button is pressed, overridden in chessboard so that it can close promotion window if either of these buttons are pressed
+     */
+    public void dispose() { }
 
     /***
      * used for debugging, mostly for check/checkmate tests since I can't otherwise see those boards, should not be called in finished project

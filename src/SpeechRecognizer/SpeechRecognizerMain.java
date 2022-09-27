@@ -281,7 +281,8 @@ public class SpeechRecognizerMain {
 	public void makeDecision(String speech , List<WordResult> speechWords) {
 		
 		System.out.println(speech);
-		currentGame.speechCalled(speech);
+		if (!(speech.equals("<unk>") && toggleIgnore)) //if toggled on, speech recognizer will constantly send in unrecognizable speech to board, only send it if player used space or speak button
+			currentGame.speechCalled(speech);
 	}
 	
 	public boolean getIgnoreSpeechRecognitionResults() {

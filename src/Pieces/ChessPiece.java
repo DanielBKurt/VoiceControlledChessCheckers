@@ -136,16 +136,4 @@ public abstract class ChessPiece extends Piece {
         }
         return diagonalPositions;
     }
-
-    /*
-
-    //will be overridden in king, rook, and pawn
-    public boolean getMoved() {
-        return true;
-    }
-
-    public void setMoved() {
-
-    }
-    */
 }

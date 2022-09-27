@@ -1,15 +1,11 @@
 package GUI;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
-import java.awt.Insets;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.ActionEvent;
 import java.awt.Font;
 import java.awt.Color;
@@ -21,7 +17,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
-import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.AbstractAction;
 
@@ -103,9 +98,10 @@ public abstract class GameGUI {
 
         //add text output on bottom and top
         this.currentTurn = new JTextArea("");
+        this.currentTurn.setEnabled(false); //prevents user from interacting with/changing text in JTextArea
         currentTurn.setFont(new Font("Monospaced", Font.BOLD, 20));
         currentTurn.setBackground(Tag.ColorChoice[colorSet][6]);
-        currentTurn.setForeground(Tag.ColorChoice[colorSet][9]);
+        currentTurn.setDisabledTextColor(Tag.ColorChoice[colorSet][9]); //disabling jtextarea also changes color to default gray so a new command is needed (not setForeground)
         JPanel bottomCenter = new JPanel();
         bottomCenter.setBackground(Tag.ColorChoice[colorSet][6]);
         bottomCenter.add(currentTurn);
@@ -138,9 +134,10 @@ public abstract class GameGUI {
 
         //create speech output at the top of the screen
         this.speechOutput = new JTextArea();
+        this.speechOutput.setEnabled(false);
         speechOutput.setFont(new Font("Monospaced", Font.BOLD, 20));
         speechOutput.setBackground(Tag.ColorChoice[colorSet][6]);
-        speechOutput.setForeground(Tag.ColorChoice[colorSet][9]);
+        speechOutput.setDisabledTextColor(Tag.ColorChoice[colorSet][9]);
         top.add(speechOutput, BorderLayout.NORTH);
 
         //add all panels and board in corresponding spots
@@ -189,17 +186,19 @@ public abstract class GameGUI {
             this.add(toggleLight);
             //text next to toggleLight, split in two rows for space
             this.topToggleText = new JTextArea("Press 'T' to");
+            topToggleText.setEnabled(false);
             topToggleText.setFont(new Font("Monospaced", Font.PLAIN, 10));
             this.bottomToggleText  = new JTextArea("toggle speech on ");
+            bottomToggleText.setEnabled(false);
             bottomToggleText.setFont(new Font("Monospaced", Font.PLAIN, 10));
             //JPanel with gridlayout to order top and bottom text
             JPanel toggleTextWrapper = new JPanel();
             toggleTextWrapper.setLayout(new GridLayout(2, 1, 0, 0));
             toggleTextWrapper.setBackground(boardBackground);
             topToggleText.setBackground(boardBackground);
-            topToggleText.setForeground(visible ? Tag.ColorChoice[colorSet][9] : boardBackground);
+            topToggleText.setDisabledTextColor(visible ? Tag.ColorChoice[colorSet][9] : boardBackground);
             bottomToggleText.setBackground(boardBackground);
-            bottomToggleText.setForeground(visible ? Tag.ColorChoice[colorSet][9] : boardBackground);
+            bottomToggleText.setDisabledTextColor(visible ? Tag.ColorChoice[colorSet][9] : boardBackground);
             toggleTextWrapper.add(topToggleText);
             toggleTextWrapper.add(bottomToggleText);
             this.add(toggleTextWrapper);
@@ -294,6 +293,7 @@ public abstract class GameGUI {
             message += "\nThis game has not been saved.";
         int quit = JOptionPane.showConfirmDialog(gameGUI, message, "Main Menu", JOptionPane.OK_CANCEL_OPTION);
         if(quit == JOptionPane.OK_OPTION) {
+            boardGUI.dispose();
             gameGUI.dispose();
             speechToggle.turnOffToggle(); //make sure voice recognizer is reset to toggle off before another board is created
             main.mainMenu();
@@ -307,6 +307,7 @@ public abstract class GameGUI {
         int quit = JOptionPane.showConfirmDialog(gameGUI, message, "Quit", JOptionPane.OK_CANCEL_OPTION);
         if(quit == JOptionPane.OK_OPTION) 
         {
+            boardGUI.dispose();
             gameGUI.dispose();
             main.exit();
         }
@@ -328,12 +329,15 @@ public abstract class GameGUI {
      */
     public void updateSpeechOutput(String speech)
     {
-        String replace;
-        if (speech.equals("<unk>"))
-            replace = "Sorry, I did not understand what you said, please try again";
-        else
-            replace = "I heard: " + speech;
-        speechOutput.replaceRange(replace, 0, speechOutput.getText().length());
+        if (boardGUI.getTurn() != Side.PAUSE && boardGUI.getTurn() != Side.OVER) //don't update speech output during pause (promotion) or after game is over
+        {
+            String replace;
+            if (speech.equals("<unk>"))
+                replace = "Sorry, I did not understand what you said, please try again";
+            else
+                replace = "I heard: " + speech;
+            speechOutput.replaceRange(replace, 0, speechOutput.getText().length());
+        }
     }
 
     /***
@@ -342,10 +346,13 @@ public abstract class GameGUI {
      */
     public void updateInvalidMove(String invalid)
     {
-        if (speechOutput.getText().length() == 0)
-            speechOutput.append(invalid);
-        else
-            speechOutput.append(" (" + invalid + ")");
+        if (boardGUI.getTurn() != Side.PAUSE && boardGUI.getTurn() != Side.OVER) //don't update speech output during pause (promotion) or after game is over
+        {
+            if (speechOutput.getText().length() == 0)
+                speechOutput.append(invalid);
+            else
+                speechOutput.append(" (" + invalid + ")"); 
+        }
     }
 
     /***
@@ -353,8 +360,11 @@ public abstract class GameGUI {
      */
     public void clearSpeechOutput()
     {
-        if (speechOutput.getText().length() != 0)
-            speechOutput.replaceRange("", 0, speechOutput.getText().length());
+        if (boardGUI.getTurn() != Side.OVER) //leave win condition in speech output box even if player clears/right clicks
+        {
+            if (speechOutput.getText().length() != 0)
+                speechOutput.replaceRange("", 0, speechOutput.getText().length());
+        }
     }
 
     /***
@@ -366,11 +376,15 @@ public abstract class GameGUI {
     /***
      * updates special status for turns
      */
-    public abstract void updateTurnStatus();
+    public void updateTurnStatus(String status) {
+        currentTurn.append(status);
+        if (currentTurn.getText().length() > 35) //prevent text from expanding beyond textbox range
+            currentTurn.replaceRange(getTurnPlayerName(boardGUI.getTurn()) + status, 0, currentTurn.getText().length()); //player name + status, same as normal without "Current turn: " in front
+    }
 
     /***
      * call when game has ended and the GUI will display winner
      * @param side - winning side
      */
-    public abstract void updateGameOver(Side side);
+    public abstract void updateGameOver(Side side, String winCondition);
 }

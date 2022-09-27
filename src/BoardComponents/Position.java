@@ -166,9 +166,6 @@ public class Position extends JComponent {
             piece.draw(g);
         if (this.posY == 7)
         {
-            //g.setColor(Color.BLACK);
-            //g.setFont(g.getFont().deriveFont(23f));
-            //g.drawString(letters[posX], 65, 74);
             g.setColor(Tag.ColorChoice[colorSet][8]);
             g.setFont(g.getFont().deriveFont((float) fontSize));
             if (fontSize == 20)
@@ -178,9 +175,6 @@ public class Position extends JComponent {
         }
         if (this.posX == 0)
         {
-            //g.setColor(Color.BLACK);
-            //g.setFont(g.getFont().deriveFont(23f));
-            //g.drawString(numbers[7 - posY], 4, 22);
             g.setColor(Tag.ColorChoice[colorSet][8]);
             g.setFont(g.getFont().deriveFont((float) fontSize));
             if (fontSize == 20)

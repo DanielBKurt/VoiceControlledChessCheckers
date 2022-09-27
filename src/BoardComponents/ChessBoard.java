@@ -3,6 +3,19 @@ package BoardComponents;
 import java.util.List;
 import java.util.ArrayList;
 
+import java.awt.GridLayout;
+import java.awt.BorderLayout;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+
 import GUI.GameGUI;
 
 import Information.Tag;
@@ -72,12 +85,21 @@ public class ChessBoard extends Board {
         }
     }
 
+    /***
+     * called at the end of nex turn, updates boardGUI and tests for check/checkmate or stalemate
+     */
     public void updateBoardGUI() {
         gameGUI.updateCurrentTurn(this.turn);
-        checkHighlight();
+        if( !checkHighlight()) //makes call to checkHighlight and updates board accordingly, if king is not in check test for stalemate
+            testStalemate();
     }
 
-    public boolean canSave() { return this.turn != Side.OVER; }
+    /***
+     * prevents saving after game is done or if promotion selection still needs to be made
+     * @return - returns true if game is on going and there is no promotion piece to select, false otherwise
+     */
+    public boolean canSave() { return this.turn != Side.OVER && promo == null; }
+
     /***
      * stores relevant board information as a string, called by save button and by moveLegal to create copy of board
      * @return - board color, current turn, all piece names, current locations, and position of en passant pawn
@@ -90,10 +112,6 @@ public class ChessBoard extends Board {
             save += " white";
         else
             save += " black";
-        if (promotionPiece != null)
-        {
-            promote("(Q)");
-        }
         for (int y = 0; y < Tag.SIZE_MAX; y++)
         {
             for (int x = 0; x < Tag.SIZE_MAX; x++)
@@ -122,26 +140,29 @@ public class ChessBoard extends Board {
     
     /***
      * called after move is made, looks if last move placed the other player in check
+     * @return - returns true if king is in check or checkmate, false otherwise, returns boolean so that stalemate is not tested if king is already in check
      */
-    public void checkHighlight()
+    public boolean checkHighlight()
     {
         //since move is already made, turn has been swapped (if black just moved, turn has already been assigned to white)
+        boolean check = false;
         if (turn == Side.WHITE)
         {
             List<Piece> pieces = canBeTaken(Side.BLACK, wKing.getPosition());
-            if (pieces.size() != 0)
+            if (pieces.size() != 0) //at least one piece placing king in check
             {
                 if (checkmate(Side.WHITE, pieces))
                 {
                     wKing.getPosition().setCheckmate(true);
                     turn = Side.OVER;
-                    gameGUI.updateGameOver(Side.BLACK);
+                    gameGUI.updateGameOver(Side.BLACK, "Checkmate");
                 }
-                else
+                else //check, not checkmate
                 {
                     wKing.getPosition().setCheck(true);
-                    gameGUI.updateTurnStatus();
+                    gameGUI.updateTurnStatus(" (in check)");
                 }
+                check = true;
             }
         }
         else //black
@@ -153,16 +174,43 @@ public class ChessBoard extends Board {
                 {
                     bKing.getPosition().setCheckmate(true);
                     turn = Side.OVER;
-                    gameGUI.updateGameOver(Side.WHITE);
+                    gameGUI.updateGameOver(Side.WHITE, "Checkmate");
                 }
                 else
                 {
                     bKing.getPosition().setCheck(true);
-                    gameGUI.updateTurnStatus();
+                    gameGUI.updateTurnStatus(" (in check)");
                 }
+                check = true;
             }
         }
         repaint();
+        return check; //stored as boolean so that repaint can be called before return
+    }
+
+    protected void testStalemate() {
+        boolean stalemate = true; //default to true, set to false once at least one legal move is found
+        for (int y = 0; y < 8 && stalemate; y++)
+        {
+            for (int x = 0; x < 8 && stalemate; x++)
+            {
+                if (!gameBoard[y][x].isFree() && gameBoard[y][x].getPiece().getSide() == this.getTurn())
+                {
+                    for (Position dest : gameBoard[y][x].getPiece().getLegalMoves(gameBoard))
+                    {
+                        if (moveLegal(gameBoard[y][x].getPiece(), dest)) //if there is at least one legal move for any piece on this side, it is not stalemate
+                        {
+                            stalemate = false;
+                            break; //break for in loop, y and x end when stalemate is false
+                        }
+                    }
+                }
+            }
+        }
+        if (stalemate) {
+            gameGUI.updateGameOver(this.turn, "Stalemate");
+            setTurn(Side.OVER);
+        }
     }
 
     protected void initializePiecesToBoard() {
@@ -320,18 +368,18 @@ public class ChessBoard extends Board {
     }
 
     /***
-     * this method moves the corresponding rook after king makes castling move
-     * @param piece - the king that moved, uses new x position to identify which rook to move
+     * this method moves the corresponding rook when king makes castling move
+     * @param chosen - the destination that the king is moving to, identifies which rook to move
      */
-    private void castle(Piece piece)
+    private void castle(Position chosen)
     {
-        int y = piece.getPosition().getPosY(); //get y coord from king
-        if (piece.getPosition().getPosX() == 2) //did king go left or right, already moved king when castle is called
+        int y = chosen.getPosY(); //get y coord from destination
+        if (chosen.getPosX() == 2) //is king going left
         {
             Piece rook = gameBoard[y][0].removePiece();
             gameBoard[y][3].setPiece(rook);
         }
-        else if (piece.getPosition().getPosX() == 6)
+        else if (chosen.getPosX() == 6) //is king going right, will always be x = 2 or 6 but using else if instead of else to prevent unlikely bugs
         {
             Piece rook = gameBoard[y][7].removePiece();
             gameBoard[y][5].setPiece(rook);
@@ -386,74 +434,119 @@ public class ChessBoard extends Board {
         deselectPiece();
     }
 
+    protected class Promotion extends JPanel implements MouseListener {
+        JFrame frame;
+        Position[][] promotionPositions;
+        public Promotion() {
+            frame = new JFrame();
+            setLayout(new GridLayout(1, 4, 0, 0));
+            promotionPositions = new Position[1][4];
+            for (int i = 0; i < 4; i++)
+            {
+                promotionPositions[0][i] = new Position(i, 0, false, 0, colorSet);
+                this.add(promotionPositions[0][i]);
+            }
+            initializePiecesForPromotion(promotionPiece.getSide());
+            this.addMouseListener(this);
+            frame = new JFrame("Promotion");
+            frame.setIconImage(new ImageIcon(Tag.BLACK_QUEEN).getImage());
+            JPanel panel = new JPanel();
+            panel.setBackground(Tag.ColorChoice[colorSet][0]);
+            JLabel instructions = new JLabel(gameGUI.getTurnPlayerName(promotionPiece.getSide()) + ", please select a piece your pawn to promote to");
+            instructions.setForeground(Tag.ColorChoice[colorSet][9]);
+            panel.add(instructions);
+            frame.add(panel, BorderLayout.NORTH);
+            frame.add(this, BorderLayout.CENTER);
+            frame.setSize(400, 150);
+            frame.setResizable(false);
+            frame.setLocationRelativeTo(null);
+            //have to handle promotion jframe getting closed, if it is closed without selecting piece the game is permanently paused
+            frame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    promote("(Q)"); //default to queen if window is closed
+                    closePromotion();
+                }
+            });
+            frame.setVisible(true);
+        }
+
+        /***
+         * initializes four piece choices onto promotion display
+         * @param side - side the pieces are for
+         */
+        private void initializePiecesForPromotion(Side side)
+        {
+            promotionPositions[0][0].setPiece(new Queen(side, promotionPositions[0][0], (side == Side.WHITE) ? Tag.WHITE_QUEEN : Tag.BLACK_QUEEN));
+            promotionPositions[0][1].setPiece(new Rook(side, promotionPositions[0][1], (side == Side.WHITE) ? Tag.WHITE_ROOK : Tag.BLACK_ROOK));
+            promotionPositions[0][2].setPiece(new Knight(side, promotionPositions[0][2], (side == Side.WHITE) ? Tag.WHITE_KNIGHT : Tag.BLACK_KNIGHT));
+            promotionPositions[0][3].setPiece(new Bishop(side, promotionPositions[0][3], (side == Side.WHITE) ? Tag.WHITE_BISHOP : Tag.BLACK_BISHOP));
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {        
+            Position clickedPosition = (Position) this.getComponentAt(new Point(e.getX(), e.getY()));
+            if (clickedPosition.getPiece() != null)
+            {
+                promote(clickedPosition.getPiece().name());
+                closePromotion();
+            }
+        }
+        
+        /***
+         * public method to dispose frame, can be called by save or main menu buttons to close window
+         */
+        public void closePromotion()
+        {
+            frame.dispose();
+        }
+
+        /**
+         * since the promotion implements MouseListner, 
+         * the following methods have to be overridden. 
+         * currently left empty as they are not needed
+         */
+        @Override
+        public void mousePressed(MouseEvent e) { }
+
+        @Override
+        public void mouseReleased(MouseEvent e) { }
+
+        @Override
+        public void mouseEntered(MouseEvent e) { }
+
+        @Override
+        public void mouseExited(MouseEvent e) { }
+    }
+
     /***
      * this is a helper method for mouseClicked and speechCalled, tries to selected piece to chosen position and handles special rules (en passant, castling, promotion)
      * @param chosen - position that the selected piece (stored as class variable) will move
      */
-    public void attemptMove(Position chosen)
-    {
-        if(chosen.isFree() || chosen.getPiece().getSide() != turn)
+    protected void attemptMove(Position chosen) {
+        if(chosen.isFree() || chosen.getPiece().getSide() != turn) //moving to free position or one occupied by other side
         {
-            if(selectedMovablePositions.contains(chosen)) 
+            if(selectedMovablePositions.contains(chosen)) //move is allowed in piece's moveset
             {
-                boolean couldMove = true;
-                //following checks are for unique rules with pawn and king
-                //en passant and castling are based on distance moved so they must be checked before piece is moved (2 vs 1 square moved)
-                //move is within if statements because I need to check for castling (based on king before move), then move king, then call castle (based on king position after move)
-                if (selectedPiece.name().equals("(P)")) //check for en passant
+                if (moveLegal(selectedPiece, chosen)) //move does not place yourself into check
                 {
-                    if (Math.abs(selectedPiece.getPosition().getPosY() - chosen.getPosY()) == 2) //moving forward two, sets up en passant
-                        setEnPassant(selectedPiece);
-                    else if (gameBoard[chosen.getPosY()][chosen.getPosX()].getEnPassant()) //not moving forward 2, check if attempting en passant
+                    checkSpecialCases(selectedPiece, chosen);
+                    moveAndUnhighlight(chosen); //move after special rules have been checked
+
+                    //after moving, check for promotion, nextTurn() cannot be called in promotion case because promotion pauses game, nextTurn() would reassign turn and allow players to move before promotion selection is made
+                    if (selectedPiece.name().equals("(P)") && (selectedPiece.getPosition().getPosY() == 7 || selectedPiece.getPosition().getPosY() == 0))
                     {
-                        Position enPassantedPawn = enPassantPawn.getPosition(); //save position so that it can removed after en passant is cleared
-                        clearEnPassant();
-                        enPassantedPawn.removePiece();
+                        promotionPiece = selectedPiece;
+                        deselectPiece();
+                        turn = Side.PAUSE; //manually pause until promotion is done
+                        gameGUI.clearSpeechOutput(); //no need for speech output when promoting
+                        promo = new Promotion();
                     }
-                    if (moveLegal(selectedPiece, chosen)) //outside of inner if else if because it may be pawn but not using en passant
-                        moveAndUnhighlight(chosen);
                     else
-                        couldMove = false;
-                }
-                else if (selectedPiece.name().equals("(K)")) //check for castling
-                {
-                    if (Math.abs(selectedPiece.getPosition().getPosX() - chosen.getPosX()) == 2)
                     {
-                        if (moveLegal(selectedPiece, chosen))
-                        {
-                            moveAndUnhighlight(chosen); //need to move before calling castle, rook moves to new castled location based on kings new position
-                            castle(selectedPiece);
-                        }
-                        else
-                            couldMove = false;
+                        deselectPiece();
+                        nextTurn();
                     }
-                    else //selected is king, not moving into castling position
-                    {
-                        if (moveLegal(selectedPiece, chosen))
-                            moveAndUnhighlight(chosen);
-                        else
-                            couldMove = false;
-                    }
-                }
-                else //default, not pawn or king
-                {
-                    if (moveLegal(selectedPiece, chosen))
-                        moveAndUnhighlight(chosen);
-                    else
-                        couldMove = false;
-                }
-                //pawn can take and then be promoted so promotion check comes after move, above check was for en passasnt, below check is for promotion
-                if (selectedPiece.name().equals("(P)") && (selectedPiece.getPosition().getPosY() == 7 || selectedPiece.getPosition().getPosY() == 0))
-                {
-                    promotionPiece = selectedPiece;
-                    deselectPiece();
-                    turn = Side.PAUSE; //manually pause until promotion is done
-                    promo = new Promotion(promotionPiece.getSide(), this, gameGUI.getTurnPlayerName(promotionPiece.getSide()), this.colorSet);
-                }
-                if (couldMove) //dont unselect and switch turns unless move is actually made
-                {
-                    deselectPiece();
-                    nextTurn();
                 }
                 else //could not move, either tried to move yourself out of check or already in check and move did not escape it
                 {
@@ -471,6 +564,30 @@ public class ChessBoard extends Board {
     }
 
     /***
+     * this method is responsible for checking for castling and en passant
+     * @param moving - piece to move, does not rely on selectedPiece because check test copy boards do not have selected pieces
+     * @param chosen - position piece is moving to
+     */
+    protected void checkSpecialCases(Piece piece, Position chosen)
+    {
+        if (piece.name().equals("(P)")) //selected is pawn, check for en passant
+        {
+            if (Math.abs(piece.getPosition().getPosY() - chosen.getPosY()) == 2) //moving forward two, sets up en passant
+                setEnPassant(piece);
+            else if (gameBoard[chosen.getPosY()][chosen.getPosX()].getEnPassant()) //attacking en passant pawn
+            {
+                Position enPassantedPawn = enPassantPawn.getPosition(); //save position so that it can removed after en passant is cleared
+                clearEnPassant();
+                enPassantedPawn.removePiece();
+            }
+        }
+        else if (piece.name().equals("(K)")) //piece is king, may be castling
+        {
+            if (Math.abs(piece.getPosition().getPosX() - chosen.getPosX()) == 2) //moving two squares, move respective rook
+                castle(chosen);
+        }
+    }
+    /***
      * called by attemptMove if the move is actually legal, makes the move and unhighlights the respective positions
      * @param chosen - the position that the selected piece is being moved to
      */
@@ -485,15 +602,15 @@ public class ChessBoard extends Board {
 
     /***
      * this method will create a copy of the board, make the move being attempted on that board, and then ensure the player did not move themself into check, if this move is legal, it will then be made on the actual board in the attemptMove() method
-     * @param selected - piece that is being moved
+     * @param piece - piece that is being moved, takes piece as argument instead of selectedPiece so that it can be used to test checkmate (can king legally move to this square or can piece legally take chosen position)
      * @param chosen - position that selected is being moved to
      * @return - true if move is legal (player did not move themself into check), false if it is illegal
      */
-    public boolean moveLegal(Piece selected, Position chosen)
+    public boolean moveLegal(Piece piece, Position chosen)
     {
         //using ints of positions as positions themselves are tied to this board and tester is a copy with separate positions
-        int selectedY = selected.getPosition().getPosY();
-        int selectedX = selected.getPosition().getPosX();
+        int selectedY = piece.getPosition().getPosY();
+        int selectedX = piece.getPosition().getPosX();
         int chosenY = chosen.getPosY();
         int chosenX = chosen.getPosX();
         String boardCopy = "white black " + this.asString(); //added colors in front as place holders for names, similar to how BoardGUI adds player names, makes indicies in boardCopy array consistent with that of saved game
@@ -629,6 +746,7 @@ public class ChessBoard extends Board {
      */
     public boolean testCheck(int selectedY, int selectedX, int chosenY, int chosenX)
     {
+        checkSpecialCases(gameBoard[selectedY][selectedX].getPiece(), gameBoard[chosenY][chosenX]);
         gameBoard[selectedY][selectedX].getPiece().move(gameBoard[chosenY][chosenX]);
         terminalPrint();
         if (turn == Side.WHITE) //white moved, turn has not yet been reassigned, make sure white did not move themself into check
@@ -697,4 +815,7 @@ public class ChessBoard extends Board {
         }
         return true;
     }
+
+    @Override
+    public void dispose() { clearPromotion(); }
 }

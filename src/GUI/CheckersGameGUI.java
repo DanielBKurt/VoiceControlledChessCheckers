@@ -2,7 +2,6 @@ package GUI;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -86,19 +85,9 @@ public class CheckersGameGUI extends GameGUI {
         currentTurn.replaceRange(replace, 0, currentTurn.getText().length());
     }
 
-    /***
-     * called after player attacks if there are more attacks to make with the same piece
-     */
-    public void updateTurnStatus() {
-        currentTurn.append(" (must continue attacking)");
-    }
-
-    public void updateGameOver(Side side) {
-        String replace = "Winner: ";
-        if (side == Side.BLACK)
-            replace += playerOneName;
-        else //red
-            replace += playerTwoName;
-        currentTurn.replaceRange(replace, 0, currentTurn.getText().length());
+    public void updateGameOver(Side side, String winCondition) {
+        speechOutput.replaceRange(winCondition, 0, speechOutput.getText().length());
+        String playerName = getTurnPlayerName(side);
+            currentTurn.replaceRange("Winner: " + playerName, 0, currentTurn.getText().length());
     }
 }

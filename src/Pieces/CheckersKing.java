@@ -15,7 +15,7 @@ public class CheckersKing extends CheckersPiece {
 
     @Override
     public List<Position> getLegalMoves(Position[][] gameBoard) {
-        if (board.getAttackMade())
+        if (board.getAvailableAttacks())
             return getLegalAttacks(gameBoard);
         else
         {
