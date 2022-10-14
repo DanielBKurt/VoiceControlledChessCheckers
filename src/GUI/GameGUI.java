@@ -254,14 +254,12 @@ public abstract class GameGUI {
         buttons.add(mainMenu);
         buttons.add(quite);
         gameGUI.add(buttons, BorderLayout.BEFORE_FIRST_LINE);
-        System.out.println(buttons.getWidth() + ", " + buttons.getHeight());
     }
 
     protected void addKeyBindings() {
         this.boardGUI.getInputMap(IFW).put(KeyStroke.getKeyStroke("T"), "toggle");
         this.boardGUI.getActionMap().put("toggle", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                System.out.println("toggle");
                 speechToggle.toggleSwitch();
             }
         });

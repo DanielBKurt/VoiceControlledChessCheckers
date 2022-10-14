@@ -305,9 +305,10 @@ public class MainGUI implements Runnable {
         JRadioButton colorSetOne;
         JRadioButton colorSetTwo;
         JRadioButton colorSetThree;
+        JRadioButton colorSetFour;
         public Settings() {
             this.setIconImage(new ImageIcon(Tag.SETTINGS_LOGO).getImage());
-            this.setSize(300, 450);
+            this.setSize(300, 525);
             this.setLocationRelativeTo(mainGUI);
             createInstructions();
             createDemoDisplays();
@@ -361,7 +362,7 @@ public class MainGUI implements Runnable {
         private void createDemoDisplays() {
             JPanel mainPanel = new JPanel();
             mainPanel.setBackground(Tag.ColorChoice[1][6]);
-            mainPanel.setPreferredSize(new Dimension(300, 300));
+            mainPanel.setPreferredSize(new Dimension(300, 375));
             mainPanel.setLayout(null);
             colorSetOne = new JRadioButton();
             colorSetOne.setBackground(Tag.ColorChoice[1][6]);
@@ -369,22 +370,29 @@ public class MainGUI implements Runnable {
             colorSetTwo.setBackground(Tag.ColorChoice[1][6]);
             colorSetThree = new JRadioButton();
             colorSetThree.setBackground(Tag.ColorChoice[1][6]);
+            colorSetFour = new JRadioButton();
+            colorSetFour.setBackground(Tag.ColorChoice[1][6]);
             ButtonGroup bg = new ButtonGroup();
             bg.add(colorSetOne);
             bg.add(colorSetTwo);
             bg.add(colorSetThree);
+            bg.add(colorSetFour);
             mainPanel.add(colorSetOne);
             mainPanel.add(colorSetTwo);
             mainPanel.add(colorSetThree);
+            mainPanel.add(colorSetFour);
             if (colorSet == 0)
                 colorSetOne.setSelected(true);
             else if (colorSet == 1)
                 colorSetTwo.setSelected(true);
-            else //colorSetThree
+            else if (colorSet == 2)
                 colorSetThree.setSelected(true);
+            else //colorSetFour
+                colorSetFour.setSelected(true);
             colorSetOne.setBounds(100, 50, 50, 20);
             colorSetTwo.setBounds(100, 125, 50, 20);
             colorSetThree.setBounds(100, 200, 50, 20);
+            colorSetFour.setBounds(100, 275, 50, 20);
             //loop through and display create displayBoard for each color set
             for (int i = 0; i < Tag.ColorChoice.length; i++)
             {
@@ -420,8 +428,10 @@ public class MainGUI implements Runnable {
                 colorSet = 0;
             else if (colorSetTwo.isSelected())
                 colorSet = 1;
-            else //colorSetThree
+            else if (colorSetThree.isSelected())
                 colorSet = 2;
+            else 
+                colorSet = 3;
             try {
                 FileWriter writer = new FileWriter("./savedgames/Settings.txt", false);
                 writer.write(String.valueOf(colorSet));

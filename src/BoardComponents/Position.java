@@ -135,7 +135,7 @@ public class Position extends JComponent {
         } else {
             if(highLight) g.setColor(Tag.ColorChoice[colorSet][2]);
             else if (selected) g.setColor(blend(Tag.ColorChoice[colorSet][0], Tag.ColorChoice[colorSet][4], 0.3f));
-            else if (check) g.setColor(blend(Tag.ColorChoice[colorSet][0], Tag.ColorChoice[colorSet][5], (colorSet == 2 ? 0.55f : 0.3f))); //red mixes really badly with the dark green so special check for if its green board
+            else if (check) g.setColor(blend(Tag.ColorChoice[colorSet][0], Tag.ColorChoice[colorSet][5], (colorSet == 3 ? 0.55f : 0.3f))); //red mixes really badly with the dark green so special check for if its green board
             else if (checkmate) g.setColor(Tag.ColorChoice[colorSet][5]);
             else g.setColor(Tag.ColorChoice[colorSet][0]);
         }

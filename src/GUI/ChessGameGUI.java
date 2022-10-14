@@ -81,15 +81,11 @@ public class ChessGameGUI extends GameGUI {
         if (side == Side.WHITE)
         {
             replace += playerOneName;
-            System.out.println("one");
         }
         else //black
         {
             replace += playerTwoName;
-            System.out.println("two");
         }
-        System.out.println(playerOneName);
-        System.out.println(playerTwoName);
         currentTurn.replaceRange(replace, 0, currentTurn.getText().length());
     }
 

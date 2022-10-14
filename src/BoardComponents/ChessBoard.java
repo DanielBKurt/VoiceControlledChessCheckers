@@ -91,7 +91,7 @@ public class ChessBoard extends Board {
     public void updateBoardGUI() {
         gameGUI.updateCurrentTurn(this.turn);
         if( !checkHighlight()) //makes call to checkHighlight and updates board accordingly, if king is not in check test for stalemate
-            testStalemate();
+            stalemateHighlight();
     }
 
     /***
@@ -188,7 +188,10 @@ public class ChessBoard extends Board {
         return check; //stored as boolean so that repaint can be called before return
     }
 
-    protected void testStalemate() {
+    /***
+     * called after making sure no one is in check, looks for at least one legal move, if no legal moves game is in stalemate
+     */
+    protected void stalemateHighlight() {
         boolean stalemate = true; //default to true, set to false once at least one legal move is found
         for (int y = 0; y < 8 && stalemate; y++)
         {
@@ -213,6 +216,9 @@ public class ChessBoard extends Board {
         }
     }
 
+    /***
+     * default initialization method to fill all pieces into their starting positions, called by new board (copy/loaded board uses other method)
+     */
     protected void initializePiecesToBoard() {
         // generate rook
         gameBoard[0][0].setPiece(new Rook(Side.BLACK, gameBoard[0][0], Tag.BLACK_ROOK));
@@ -326,7 +332,7 @@ public class ChessBoard extends Board {
             else //y == 4
                 gameBoard[5][x].setEnPassant(true);
         }
-        terminalPrint();
+        //terminalPrint();
     }
 
     /***
@@ -434,6 +440,7 @@ public class ChessBoard extends Board {
         deselectPiece();
     }
 
+    //creates new JFrame with similar implementation to board, shows piece choices for player to promote a pawn to
     protected class Promotion extends JPanel implements MouseListener {
         JFrame frame;
         Position[][] promotionPositions;
@@ -637,19 +644,64 @@ public class ChessBoard extends Board {
     public List<Piece> canBeTaken(Side side, Position initial)
     {
         List<Piece> pieces = new ArrayList<Piece>();
-        //check along all lines
-        for (int y = -1; y < 2; y++) //-1, 0, 1
+        //check along all lines, add piece to list if it can take
+        int[][] directions = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
+        for (int[] line : directions)
         {
-            for (int x = -1; x < 2; x++)
+            //shift y and x from the start to avoid comparing initial position
+            int y = initial.getPosY() + line[0];
+            int x = initial.getPosX() + line[1];
+            boolean oneShift = true; //true on first loop, within range of king and pawn
+            while (y < 8 && y > -1 && x < 8 && x > -1)
             {
-                if (y == 0 && x == 0) //no direction for line
-                    continue;
-                Piece lineChecked = checkLine(side, initial, y, x);
-                if (lineChecked != null)
-                    pieces.add(lineChecked);
+                if (gameBoard[y][x].isFree()) //square is empty
+                {
+                    //keep incrementing until a piece is found or out of bounds
+                    y += line[0];
+                    x += line[1];
+                    oneShift = false;
+                }
+                else //square is taken
+                {
+                    Piece occupyingPiece = gameBoard[y][x].getPiece();
+                    String name = occupyingPiece.name();
+                    if (occupyingPiece.getSide() == side) //piece is side I'm looking for
+                    {
+                        if (line[0] != 0 && line[1] != 0) //both are shifting, diagonal line
+                        {
+                            if (name.equals("(B)") || name.equals("(Q)") || (name.equals("(K)") && oneShift))
+                                pieces.add(occupyingPiece);
+                            else if (name.equals("(P)") && oneShift) //pawn and within pawn range
+                            {
+                                //make sure pawn can move in that direction, separate checks because pawn can only move diagonally when attacking unlike pieces above
+                                //white pawns start at y = 6, can only move in decreasing y direction
+                                //black pawns start at y = 1, can only move in increasing y direction
+                                if ((occupyingPiece.getSide() == Side.WHITE && initial.getPosY() < y) || (occupyingPiece.getSide() == Side.BLACK && initial.getPosY() > y))
+                                {
+                                    if (!initial.isFree() || initial.getEnPassant()) //occupyingPiece can take initial because it has a piece or because it is empty but can be taken with en passant
+                                        pieces.add(occupyingPiece);
+                                }
+                            }
+                        }
+                        else //only x or y shifting, vertical or horizontal line
+                        {
+                            if (name.equals("(R)") || name.equals("(Q)") || (name.equals("(K)") && oneShift))
+                                pieces.add(occupyingPiece);
+                            else if (name.equals("(P)") && line[1] == 0 && initial.isFree()) //pawn can only move forward along y axis to open squares
+                            {
+                                //ensure that pawn can move in that y direction
+                                if ((occupyingPiece.getSide() == Side.WHITE && initial.getPosY() < y) || (occupyingPiece.getSide() == Side.BLACK && initial.getPosY() > y))
+                                {
+                                    if (oneShift || (Math.abs(y - initial.getPosY()) == 2 && !occupyingPiece.getMoved())) //moving forward one square, or has not moved yet amd initial is 2 squares in front of pawn
+                                        pieces.add(occupyingPiece);
+                                }
+                            }
+                        }
+                    }
+                    break; //piece will block initial from other pieces further along that line, regardless of type or side of piece
+                }
             }
         }
-        //the following checks are not separate methods because each line has only one potential taker, there could be multiple knights or pawns in en passant positions
         //check all potential knight locations
         int[][] knights = {{1, 2}, {1, -2}, {2, 1}, {2, -1}, {-1, 2}, {-1, -2}, {-2, 1}, {-2, -1}};
         for (int[] shift : knights)
@@ -671,72 +723,6 @@ public class ChessBoard extends Board {
     }
 
     /***
-     * helper method for canBeTaken, looks at line indiciated from yShift and xShift for piece that can take initial, pass in 0 for x for vertical line, 0 for y for horizontal line, or no zeroes for diagonal
-     * @param side - side attempting to take position
-     * @param initial - position being taken
-     * @param yShift - direction on y-axis being checked
-     * @param xShift - direction on x-axis being checked
-     * @return - returns piece if piece matching passed in side on line can take initial position, null otherwise
-     */
-    public Piece checkLine(Side side, Position initial, int yShift, int xShift)
-    {
-        //shift y and x from the start to avoid comparing initial position
-        int y = initial.getPosY() + yShift;
-        int x = initial.getPosX() + xShift;
-        boolean oneShift = true; //true on first loop, within range of king and pawn
-        while (y < 8 && y > -1 && x < 8 && x > -1)
-        {
-            if (gameBoard[y][x].isFree()) //square is empty
-            {
-                //keep incrementing until a piece is found or out of bounds
-                y += yShift;
-                x += xShift;
-                oneShift = false;
-            }
-            else //square is taken
-            {
-                Piece occupyingPiece = gameBoard[y][x].getPiece();
-                String name = occupyingPiece.name();
-                if (occupyingPiece.getSide() == side) //piece is side I'm looking for
-                {
-                    if (xShift != 0 && yShift != 0) //both are shifting, diagonal line
-                    {
-                        if (name.equals("(B)") || name.equals("(Q)") || (name.equals("(K)") && oneShift))
-                            return occupyingPiece;
-                        else if (name.equals("(P)") && oneShift) //pawn and within pawn range
-                        {
-                            //make sure pawn can move in that direction, separate checks because pawn can only move diagonally when attacking unlike pieces above
-                            //white pawns start at y = 6, can only move in decreasing y direction
-                            //black pawns start at y = 1, can only move in increasing y direction
-                            if ((occupyingPiece.getSide() == Side.WHITE && initial.getPosY() < y) || (occupyingPiece.getSide() == Side.BLACK && initial.getPosY() > y))
-                            {
-                                if (!initial.isFree() || initial.getEnPassant()) //occupyingPiece can take initial because it has a piece or because it is empty but can be taken with en passant
-                                    return occupyingPiece;
-                            }
-                        }
-                    }
-                    else //only x or y shifting, vertical or horizontal line
-                    {
-                        if (name.equals("(R)") || name.equals("(Q)") || (name.equals("(K)") && oneShift))
-                            return occupyingPiece;
-                        else if (name.equals("(P)") && xShift == 0 && initial.isFree()) //pawn can only move forward along y axis to open squares
-                        {
-                            //ensure that pawn can move in that y direction
-                            if ((occupyingPiece.getSide() == Side.WHITE && initial.getPosY() < y) || (occupyingPiece.getSide() == Side.BLACK && initial.getPosY() > y))
-                            {
-                                if (oneShift || (Math.abs(y - initial.getPosY()) == 2 && !occupyingPiece.getMoved())) //moving forward one square, or has not moved yet amd initial is 2 squares in front of pawn
-                                    return occupyingPiece;
-                            }
-                        }
-                    }
-                }
-                break; //piece will block initial from other pieces further along that line, regardless of type or side of piece
-            }
-        }
-        return null; //no piece on this line can take given position
-    }
-
-    /***
      * this method is called by moveLegal after moveLegal creates a copy of the board, moves piece at selected indicies to chosen indicies and looks if player moved themself into check, takes ints instead of position or piece because position and piece are specific to actual board and therefor not present on copy board within which this method is called
      * @param selectedY - y coordinate of selected piece
      * @param selectedX - x coordinate of selected piece
@@ -748,7 +734,7 @@ public class ChessBoard extends Board {
     {
         checkSpecialCases(gameBoard[selectedY][selectedX].getPiece(), gameBoard[chosenY][chosenX]);
         gameBoard[selectedY][selectedX].getPiece().move(gameBoard[chosenY][chosenX]);
-        terminalPrint();
+        //terminalPrint();
         if (turn == Side.WHITE) //white moved, turn has not yet been reassigned, make sure white did not move themself into check
             return (canBeTaken(Side.BLACK, wKing.getPosition()).size() != 0); //zero if nothing can attack king
         else //black

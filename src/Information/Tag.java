@@ -13,6 +13,7 @@ public class Tag {
     public static Color[][] ColorChoice = {
         {new Color(89, 32, 9), new Color(193, 142, 107), new Color(128, 56, 26), new Color(235, 189, 158), new Color(250, 147, 44), new Color(196, 0, 33), new Color(43, 29, 19), new Color(249, 184, 141), Color.GREEN, Color.WHITE},
         {new Color(96, 96, 96), new Color(160, 160, 160), new Color(64, 64, 64), new Color(224, 224, 224), new Color(250, 147, 44), new Color(196, 0, 33), new Color(32, 32, 32), new Color(175, 175, 175), new Color(34, 27, 252), Color.WHITE},
+        {new Color(60, 60, 60), new Color(180, 30, 30), new Color(64, 64, 64), new Color(222, 22, 22), new Color(250, 147, 44), new Color(196, 0, 33), new Color(32, 32, 32), new Color(175, 175, 175), Color.ORANGE, Color.WHITE},
         {new Color(8, 82, 11), new Color(160, 160, 160), new Color(19, 125, 22), new Color(224, 224, 224), new Color(250, 147, 44), new Color(196, 0, 33), new Color(1, 46, 3), new Color(211, 236, 212), Color.ORANGE, Color.WHITE}};
 
         //{new Color(130, 176, 130), new Color(209, 230, 216), new Color(91, 146, 91), new Color(234, 240, 236), new Color(250, 147, 44), new Color(196, 0, 33), new Color(8, 82, 11), new Color(211, 236, 212), new Color(102, 40, 14), Color.WHITE}};
